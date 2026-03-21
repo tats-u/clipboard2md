@@ -1,0 +1,100 @@
+import { unified } from 'unified';
+import rehypeParse from 'rehype-parse';
+import rehypeRemark from 'rehype-remark';
+import { defaultHandlers } from 'hast-util-to-mdast';
+import remarkGfm from 'remark-gfm';
+import remarkStringify from 'remark-stringify';
+import { visit } from 'unist-util-visit';
+import { toHtml } from 'hast-util-to-html';
+import type { Settings } from './settings';
+
+function rehypeRemoveComments() {
+  return (tree: any) => {
+    const walk = (node: any) => {
+      if (node.children) {
+        node.children = node.children.filter((child: any) => child.type !== 'comment');
+        node.children.forEach(walk);
+      }
+    };
+    walk(tree);
+  };
+}
+
+function remarkBareAutolinks() {
+  return (tree: any) => {
+    visit(tree, 'link', (node: any, index: number | undefined, parent: any) => {
+      if (index === undefined || !parent) return;
+      if (node.children.length !== 1 || node.children[0].type !== 'text') return;
+
+      const text = node.children[0].value as string;
+      const url = node.url as string;
+
+      let bareText: string | null = null;
+
+      if (text === url) {
+        bareText = url;
+      } else if (
+        /^https?:\/\//.test(url) &&
+        text === url.replace(/^https?:\/\//, '') &&
+        text.startsWith('www.')
+      ) {
+        bareText = text;
+      }
+
+      if (bareText && /^(https?:\/\/|www\.)/.test(bareText)) {
+        parent.children[index] = { type: 'text', value: bareText };
+        return index;
+      }
+    });
+  };
+}
+
+/**
+ * Custom table handler: tries default GFM table conversion,
+ * falls back to raw HTML for tables that can't be represented in GFM.
+ */
+function createTableHandler() {
+  return (state: any, node: any) => {
+    try {
+      return defaultHandlers.table(state, node);
+    } catch {
+      // Non-GFM-compatible table — output as raw HTML block
+      const html = toHtml(node, { allowDangerousHtml: true });
+      return { type: 'html', value: html };
+    }
+  };
+}
+
+export async function htmlToMarkdown(
+  html: string,
+  settings?: Partial<Settings>,
+): Promise<string> {
+  const bullet = settings?.listMarker ?? '-';
+
+  const result = await unified()
+    .use(rehypeParse)
+    .use(rehypeRemoveComments)
+    .use(rehypeRemark, {
+      handlers: {
+        table: createTableHandler(),
+      },
+    } as any)
+    .use(remarkBareAutolinks)
+    .use(remarkGfm)
+    .use(remarkStringify, {
+      bullet,
+      setext: false,
+    })
+    .process(html);
+
+  let md = String(result);
+
+  // remark-gfm escapes colons/dots in bare URLs to prevent autolinks;
+  // undo this since we intentionally want GFM autolinks.
+  md = md
+    .replace(/https\\:/g, 'https:')
+    .replace(/http\\:/g, 'http:')
+    .replace(/www\\./g, 'www.');
+
+  return md;
+}

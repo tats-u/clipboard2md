@@ -1,43 +1,40 @@
-# Astro Starter Kit: Minimal
+# clipboard2md
 
-```sh
-pnpm create astro@latest -- --template minimal
+A web app that converts HTML from your clipboard into Markdown. Paste any HTML content and instantly get clean Markdown — ready to review and copy.
+
+## Features
+
+- **Paste to convert** — Just hit Ctrl+V with HTML in your clipboard
+- **Markdown tab** (default) — View the converted Markdown source and a rendered preview
+- **HTML tab** — Inspect the original HTML source and see it rendered
+- **One-click copy** — Copy the Markdown to your clipboard with a single button
+- **GFM support** — Tables, strikethrough, and other GitHub Flavored Markdown extensions
+
+## Tech Stack
+
+- [Astro](https://astro.build/) — Static site framework
+- [React](https://react.dev/) — UI components
+- [Tailwind CSS](https://tailwindcss.com/) v4 — Styling
+- [unified](https://unifiedjs.com/) ecosystem — HTML → Markdown conversion
+  - rehype-parse → rehype-remark → remark-stringify
+
+> [!NOTE]
+> `turndown` is more popular for HTML to Markdown conversion, but I chose the unified ecosystem for better control, extensibility, and more beautiful Markdown output.
+
+## Development
+
+```bash
+pnpm install
+node --run dev
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+## Build
 
-## 🚀 Project Structure
-
-Inside of your Astro project, you'll see the following folders and files:
-
-```text
-/
-├── public/
-├── src/
-│   └── pages/
-│       └── index.astro
-└── package.json
+```bash
+node --run build
+node --run preview
 ```
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+## AI usage note
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
-
-Any static assets, like images, can be placed in the `public/` directory.
-
-## 🧞 Commands
-
-All commands are run from the root of the project, from a terminal:
-
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `pnpm install`             | Installs dependencies                            |
-| `pnpm dev`             | Starts local dev server at `localhost:4321`      |
-| `pnpm build`           | Build your production site to `./dist/`          |
-| `pnpm preview`         | Preview your build locally, before deploying     |
-| `pnpm astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `pnpm astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+Scaffolded with GitHub Copilot CLI powered by Claude Opus 4.6.
