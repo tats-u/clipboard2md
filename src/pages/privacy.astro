@@ -1,0 +1,75 @@
+---
+import '../styles/global.css';
+
+const base = import.meta.env.BASE_URL;
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <title>Privacy Policy – clipboard2md</title>
+  </head>
+  <body class="bg-gray-950 text-gray-100 font-mono">
+    <div class="max-w-3xl mx-auto p-4 min-h-screen">
+      <header class="flex items-center justify-between mb-6">
+        <a href={base} class="text-lg text-gray-500 font-mono tracking-widest select-none hover:text-gray-400 transition-colors no-underline">
+          clipboard<span class="text-accent">2</span>md
+        </a>
+      </header>
+
+      <main class="text-gray-300 leading-relaxed">
+        <h1 class="text-2xl font-bold text-gray-100 mb-6">Privacy Policy</h1>
+
+        <section class="mb-6">
+          <h2 class="text-lg font-semibold text-gray-100 mb-2">No Data Collection</h2>
+          <p class="mb-3">
+            clipboard2md does <strong class="text-gray-100">not</strong> collect, transmit, or store any of your data.
+          </p>
+        </section>
+
+        <section class="mb-6">
+          <h2 class="text-lg font-semibold text-gray-100 mb-2">Fully Client-Side Processing</h2>
+          <p class="mb-3">
+            All content you paste is processed <strong class="text-gray-100">entirely within your browser</strong> on your device.
+            The HTML-to-Markdown conversion runs locally using JavaScript — your pasted content never leaves your machine.
+          </p>
+          <p class="mb-3">
+            No data is sent to any external server. Nothing is processed, stored, or logged remotely.
+          </p>
+        </section>
+
+        <section class="mb-6">
+          <h2 class="text-lg font-semibold text-gray-100 mb-2">Local Storage</h2>
+          <p class="mb-3">
+            clipboard2md uses your browser's <code class="bg-gray-800 px-1.5 py-0.5 rounded text-sm">localStorage</code> solely to remember your conversion settings (such as list marker style and line break preference).
+            This data stays on your device and is never transmitted anywhere.
+          </p>
+        </section>
+
+        <section class="mb-6">
+          <h2 class="text-lg font-semibold text-gray-100 mb-2">No Cookies or Tracking</h2>
+          <p class="mb-3">
+            This application does not use cookies, analytics, or any tracking mechanisms.
+          </p>
+        </section>
+
+        <section class="mb-6">
+          <h2 class="text-lg font-semibold text-gray-100 mb-2">Open Source</h2>
+          <p class="mb-3">
+            clipboard2md is open source. You can inspect the source code at any time to verify these claims.
+          </p>
+        </section>
+      </main>
+
+      <footer class="mt-12 pt-4 border-t border-gray-800 text-center">
+        <a href={base} class="text-sm text-gray-500 hover:text-gray-400 transition-colors">
+          ← Back to clipboard2md
+        </a>
+      </footer>
+    </div>
+  </body>
+</html>

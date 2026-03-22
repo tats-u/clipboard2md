@@ -1,6 +1,8 @@
 ---
 import App from '../components/App';
 import '../styles/global.css';
+
+const base = import.meta.env.BASE_URL;
 ---
 
 <html lang="en">
@@ -13,6 +15,6 @@ import '../styles/global.css';
     <title>clipboard2md</title>
   </head>
   <body class="bg-gray-950 text-gray-100 font-mono">
-    <App client:load />
+    <App base={base} client:load />
   </body>
 </html>
