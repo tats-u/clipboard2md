@@ -5,6 +5,7 @@ import MarkdownTab from './MarkdownTab';
 import HtmlTab from './HtmlTab';
 import Toast from './Toast';
 import SettingsPanel from './Settings';
+import DOMPurify from 'dompurify';
 
 type Tab = 'markdown' | 'html';
 
@@ -34,7 +35,8 @@ function AppContent() {
     const handlePaste = (e: ClipboardEvent) => {
       const clipboardHtml = e.clipboardData?.getData('text/html');
       if (clipboardHtml) {
-        setHtml(clipboardHtml);
+        const sanitizedHtml = DOMPurify.sanitize(clipboardHtml);
+        setHtml(sanitizedHtml);
       } else {
         showToast('No HTML found in clipboard');
       }
