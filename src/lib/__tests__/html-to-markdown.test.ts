@@ -78,6 +78,16 @@ describe('htmlToMarkdown', () => {
       const md = await htmlToMarkdown(html);
       expect(md).toContain('[click here](https://example.com)');
     });
+
+    it('outputs plain text for anchor without href', async () => {
+      const html =
+        '<a href="https://spec.commonmark.org/0.31.2/#example-43">Example 43</a>' +
+        '<a class="dingus" title="open in interactive dingus">Try It</a>';
+      const md = await htmlToMarkdown(html);
+      expect(md).toContain('[Example 43](https://spec.commonmark.org/0.31.2/#example-43)');
+      expect(md).not.toContain('<>');
+      expect(md).toContain('Try It');
+    });
   });
 
   describe('br style', () => {

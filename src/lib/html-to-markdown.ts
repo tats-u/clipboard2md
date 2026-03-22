@@ -20,6 +20,18 @@ function rehypeRemoveComments() {
   };
 }
 
+function remarkStripEmptyLinks() {
+  return (tree: any) => {
+    visit(tree, 'link', (node: any, index: number | undefined, parent: any) => {
+      if (index === undefined || !parent) return;
+      if (!node.url) {
+        parent.children.splice(index, 1, ...node.children);
+        return index;
+      }
+    });
+  };
+}
+
 function remarkBareAutolinks() {
   return (tree: any) => {
     visit(tree, 'link', (node: any, index: number | undefined, parent: any) => {
@@ -94,6 +106,7 @@ export async function htmlToMarkdown(
         table: createTableHandler(),
       },
     } as any)
+    .use(remarkStripEmptyLinks)
     .use(remarkBareAutolinks)
     .use(remarkGfm)
     .use(remarkStringify, {
