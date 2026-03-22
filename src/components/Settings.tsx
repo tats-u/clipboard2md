@@ -83,6 +83,30 @@ export default function SettingsPanel() {
             </div>
           </div>
 
+          {/* Thematic break (hr) style */}
+          <div className="mb-4">
+            <label className="text-xs text-gray-400 block mb-1.5">Thematic break</label>
+            <div className="flex gap-2">
+              {([
+                { value: '*', label: '***' },
+                { value: '-', label: '---' },
+                { value: '_', label: '___' },
+              ] as const).map(({ value, label }) => (
+                <button
+                  key={value}
+                  onClick={() => updateSettings({ hrStyle: value })}
+                  className={`px-3 py-1 text-sm rounded border cursor-pointer transition-colors
+                    ${settings.hrStyle === value
+                      ? 'border-accent text-accent bg-accent/10'
+                      : 'border-gray-700 text-gray-400 hover:border-gray-500'
+                    }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Allow raw HTML */}
           <div>
             <label className="flex items-center gap-2 text-xs text-gray-300 cursor-pointer">

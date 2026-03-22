@@ -90,6 +90,34 @@ describe('htmlToMarkdown', () => {
     });
   });
 
+  describe('thematic break (hr) style', () => {
+    const html = '<p>before</p><hr><p>after</p>';
+
+    it('uses *** as default thematic break', async () => {
+      const md = await htmlToMarkdown(html);
+      expect(md).toContain('***');
+      expect(md).toContain('before');
+      expect(md).toContain('after');
+    });
+
+    it('respects hrStyle setting *', async () => {
+      const md = await htmlToMarkdown(html, { hrStyle: '*' });
+      expect(md).toContain('***');
+    });
+
+    it('respects hrStyle setting -', async () => {
+      const md = await htmlToMarkdown(html, { hrStyle: '-' });
+      expect(md).toContain('---');
+      expect(md).not.toContain('***');
+    });
+
+    it('respects hrStyle setting _', async () => {
+      const md = await htmlToMarkdown(html, { hrStyle: '_' });
+      expect(md).toContain('___');
+      expect(md).not.toContain('***');
+    });
+  });
+
   describe('br style', () => {
     const html = '<p>line1<br>line2</p>';
 

@@ -97,6 +97,7 @@ export async function htmlToMarkdown(
 ): Promise<string> {
   const bullet = settings?.listMarker ?? '-';
   const brStyle = settings?.brStyle ?? 'backslash';
+  const rule = settings?.hrStyle ?? '*';
 
   const result = await unified()
     .use(rehypeParse)
@@ -111,6 +112,7 @@ export async function htmlToMarkdown(
     .use(remarkGfm)
     .use(remarkStringify, {
       bullet,
+      rule,
       setext: false,
       handlers: {
         break: createBreakHandler(brStyle),
