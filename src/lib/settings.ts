@@ -3,12 +3,14 @@ import { defaultSchema } from 'rehype-sanitize';
 export interface Settings {
   listMarker: '-' | '*' | '+';
   brStyle: 'backslash' | 'spaces' | 'newline';
+  hrStyle: '*' | '-' | '_';
   allowRawHtml: boolean;
 }
 
 export const defaultSettings: Settings = {
   listMarker: '-',
   brStyle: 'backslash',
+  hrStyle: '*',
   allowRawHtml: true,
 };
 
