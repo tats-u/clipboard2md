@@ -9,15 +9,19 @@ import DOMPurify from 'dompurify';
 
 type Tab = 'markdown' | 'html';
 
-export default function App() {
+interface AppProps {
+  base: string;
+}
+
+export default function App({ base }: AppProps) {
   return (
     <SettingsProvider>
-      <AppContent />
+      <AppContent base={base} />
     </SettingsProvider>
   );
 }
 
-function AppContent() {
+function AppContent({ base }: { base: string }) {
   const { settings } = useSettings();
   const [html, setHtml] = useState('');
   const [markdown, setMarkdown] = useState('');
@@ -66,7 +70,7 @@ function AppContent() {
   ];
 
   return (
-    <div className="max-w-5xl mx-auto p-4 min-h-screen">
+    <div className="max-w-5xl mx-auto p-4 min-h-screen flex flex-col">
       <Toast message={toastMessage} visible={toastVisible} onDismiss={() => setToastVisible(false)} />
 
       {/* Header */}
@@ -121,6 +125,19 @@ function AppContent() {
           <span className="mt-6 text-accent text-2xl animate-blink">▌</span>
         </div>
       )}
+
+      {/* Footer */}
+      <footer className="mt-auto pt-6 text-center text-xs text-gray-600">
+        <p className="mb-1">
+          Your pasted content never leaves your device — all processing happens in your browser.
+        </p>
+        <a
+          href={`${base}privacy`}
+          className="hover:text-gray-400 transition-colors"
+        >
+          Privacy Policy – See details
+        </a>
+      </footer>
     </div>
   );
 }
