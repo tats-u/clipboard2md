@@ -65,11 +65,26 @@ function createTableHandler() {
   };
 }
 
+function createBreakHandler(brStyle: Settings['brStyle']) {
+  return () => {
+    switch (brStyle) {
+      case 'spaces':
+        return '  \n';
+      case 'newline':
+        return '\n';
+      case 'backslash':
+      default:
+        return '\\\n';
+    }
+  };
+}
+
 export async function htmlToMarkdown(
   html: string,
   settings?: Partial<Settings>,
 ): Promise<string> {
   const bullet = settings?.listMarker ?? '-';
+  const brStyle = settings?.brStyle ?? 'backslash';
 
   const result = await unified()
     .use(rehypeParse)
@@ -84,6 +99,9 @@ export async function htmlToMarkdown(
     .use(remarkStringify, {
       bullet,
       setext: false,
+      handlers: {
+        break: createBreakHandler(brStyle),
+      },
     })
     .process(html);
 

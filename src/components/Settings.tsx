@@ -54,6 +54,35 @@ export default function SettingsPanel() {
             </div>
           </div>
 
+          {/* Line break style */}
+          <div className="mb-4">
+            <label className="text-xs text-gray-400 block mb-1.5">Line break style</label>
+            <div className="flex gap-2">
+              {([
+                { value: 'backslash', label: '\\' },
+                { value: 'spaces', label: '␣␣' },
+                { value: 'newline', label: '↵' },
+              ] as const).map(({ value, label }) => (
+                <button
+                  key={value}
+                  onClick={() => updateSettings({ brStyle: value })}
+                  className={`px-3 py-1 text-sm rounded border cursor-pointer transition-colors
+                    ${settings.brStyle === value
+                      ? 'border-accent text-accent bg-accent/10'
+                      : 'border-gray-700 text-gray-400 hover:border-gray-500'
+                    }`}
+                  title={
+                    value === 'backslash' ? 'Backslash (\\)' :
+                    value === 'spaces' ? 'Two spaces' :
+                    'Newline (GitHub style)'
+                  }
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Allow raw HTML */}
           <div>
             <label className="flex items-center gap-2 text-xs text-gray-300 cursor-pointer">

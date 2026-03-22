@@ -80,6 +80,33 @@ describe('htmlToMarkdown', () => {
     });
   });
 
+  describe('br style', () => {
+    const html = '<p>line1<br>line2</p>';
+
+    it('uses backslash line break by default', async () => {
+      const md = await htmlToMarkdown(html);
+      expect(md).toContain('line1\\\nline2');
+    });
+
+    it('respects brStyle setting backslash', async () => {
+      const md = await htmlToMarkdown(html, { brStyle: 'backslash' });
+      expect(md).toContain('line1\\\nline2');
+    });
+
+    it('respects brStyle setting spaces', async () => {
+      const md = await htmlToMarkdown(html, { brStyle: 'spaces' });
+      expect(md).toMatch(/line1  \nline2/);
+    });
+
+    it('respects brStyle setting newline', async () => {
+      const md = await htmlToMarkdown(html, { brStyle: 'newline' });
+      expect(md).toContain('line1\nline2');
+      // Should NOT have backslash or trailing spaces before the newline
+      expect(md).not.toMatch(/line1\\\n/);
+      expect(md).not.toMatch(/line1  \n/);
+    });
+  });
+
   describe('table fallback', () => {
     it('converts simple GFM-compatible tables', async () => {
       const html = `

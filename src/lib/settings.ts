@@ -2,11 +2,13 @@ import { defaultSchema } from 'rehype-sanitize';
 
 export interface Settings {
   listMarker: '-' | '*' | '+';
+  brStyle: 'backslash' | 'spaces' | 'newline';
   allowRawHtml: boolean;
 }
 
 export const defaultSettings: Settings = {
   listMarker: '-',
+  brStyle: 'backslash',
   allowRawHtml: true,
 };
 
