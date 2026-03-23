@@ -3,7 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize from 'rehype-sanitize';
-import { CopyIcon, CheckIcon } from '@primer/octicons-react';
+import { CopyIcon, CheckIcon, QuoteIcon } from '@primer/octicons-react';
 import CodeBlock from './CodeBlock';
 import { useSettings } from './SettingsContext';
 import { sanitizeSchema } from '../lib/settings';
@@ -14,6 +14,7 @@ interface MarkdownTabProps {
 
 export default function MarkdownTab({ markdown }: MarkdownTabProps) {
   const [copied, setCopied] = useState(false);
+  const [quoteCopied, setQuoteCopied] = useState(false);
   const { settings } = useSettings();
 
   const handleCopy = useCallback(async () => {
@@ -21,6 +22,20 @@ export default function MarkdownTab({ markdown }: MarkdownTabProps) {
       await navigator.clipboard.writeText(markdown);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // clipboard write failed silently
+    }
+  }, [markdown]);
+
+  const handleCopyAsQuote = useCallback(async () => {
+    try {
+      const quoted = markdown
+        .split('\n')
+        .map((line) => (line === '' ? '>' : `> ${line}`))
+        .join('\n');
+      await navigator.clipboard.writeText(quoted);
+      setQuoteCopied(true);
+      setTimeout(() => setQuoteCopied(false), 2000);
     } catch {
       // clipboard write failed silently
     }
@@ -41,17 +56,30 @@ export default function MarkdownTab({ markdown }: MarkdownTabProps) {
           <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-400">
             Source
           </h2>
-          <button
-            onClick={handleCopy}
-            className={`flex items-center gap-1.5 px-3 py-1 text-xs rounded border transition-colors duration-200 cursor-pointer
-              ${copied
-                ? 'border-green-500 text-green-400 bg-green-500/10'
-                : 'border-gray-600 text-gray-300 hover:border-accent hover:text-accent copy-breathe'
-              }`}
-          >
-            {copied ? <CheckIcon size={14} /> : <CopyIcon size={14} />}
-            {copied ? 'Copied!' : 'Copy'}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleCopyAsQuote}
+              className={`flex items-center gap-1.5 px-3 py-1 text-xs rounded border transition-colors duration-200 cursor-pointer
+                ${quoteCopied
+                  ? 'border-green-500 text-green-400 bg-green-500/10'
+                  : 'border-gray-600 text-gray-300 hover:border-accent hover:text-accent copy-breathe'
+                }`}
+            >
+              {quoteCopied ? <CheckIcon size={14} /> : <QuoteIcon size={14} />}
+              {quoteCopied ? 'Copied!' : 'Copy as Quote'}
+            </button>
+            <button
+              onClick={handleCopy}
+              className={`flex items-center gap-1.5 px-3 py-1 text-xs rounded border transition-colors duration-200 cursor-pointer
+                ${copied
+                  ? 'border-green-500 text-green-400 bg-green-500/10'
+                  : 'border-gray-600 text-gray-300 hover:border-accent hover:text-accent copy-breathe'
+                }`}
+            >
+              {copied ? <CheckIcon size={14} /> : <CopyIcon size={14} />}
+              {copied ? 'Copied!' : 'Copy'}
+            </button>
+          </div>
         </div>
         <CodeBlock code={markdown} lang="markdown" />
       </section>
