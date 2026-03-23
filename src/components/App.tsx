@@ -5,6 +5,7 @@ import MarkdownTab from './MarkdownTab';
 import HtmlTab from './HtmlTab';
 import Toast from './Toast';
 import SettingsPanel from './Settings';
+import { MarkGithubIcon } from '@primer/octicons-react';
 import DOMPurify from 'dompurify';
 
 type Tab = 'markdown' | 'html';
@@ -103,7 +104,19 @@ function AppContent({ base }: { base: string }) {
         <h1 className="text-lg text-gray-500 font-mono tracking-widest select-none">
           clipboard<span className="text-accent">2</span>md
         </h1>
-        <SettingsPanel />
+        <div className="flex items-center gap-1">
+          <a
+            href="https://github.com/tats-u/clipboard2md"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-gray-500 hover:text-accent transition-colors p-1"
+            title="GitHub"
+            aria-label="View source code on GitHub"
+          >
+            <MarkGithubIcon size={16} />
+          </a>
+          <SettingsPanel />
+        </div>
       </header>
 
       {hasContent ? (
