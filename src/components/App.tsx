@@ -49,14 +49,15 @@ function AppContent({ base }: { base: string }) {
       const items = e.clipboardData?.items;
 
       // Check for media types (image/video/audio)
+      const mediaTypePattern = /^(image|video|audio)\//;
       let mediaKind: string | undefined;
       for (const t of types) {
-        const m = /^(image|video|audio)\//.exec(t);
+        const m = mediaTypePattern.exec(t);
         if (m) { mediaKind = m[1]; break; }
       }
       if (!mediaKind && items) {
         for (let i = 0; i < items.length; i++) {
-          const m = /^(image|video|audio)\//.exec(items[i].type);
+          const m = mediaTypePattern.exec(items[i].type);
           if (m) { mediaKind = m[1]; break; }
         }
       }
