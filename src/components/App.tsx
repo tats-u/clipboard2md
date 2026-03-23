@@ -127,13 +127,13 @@ function AppContent({ base }: { base: string }) {
       )}
 
       {/* Footer */}
-      <footer className="mt-auto pt-6 text-center text-xs text-gray-600">
+      <footer className="mt-auto pt-6 text-center text-xs text-gray-500">
         <p className="mb-1">
           Your pasted content never leaves your device — all processing happens in your browser.
         </p>
         <a
-          href={`${base}privacy`}
-          className="hover:text-gray-400 transition-colors"
+          href={`${base}privacy/`}
+          className="text-gray-400 hover:text-gray-300 transition-colors"
         >
           Privacy Policy – See details
         </a>
