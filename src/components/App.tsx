@@ -41,6 +41,31 @@ function AppContent({ base }: { base: string }) {
       if (clipboardHtml) {
         const sanitizedHtml = DOMPurify.sanitize(clipboardHtml);
         setHtml(sanitizedHtml);
+        return;
+      }
+
+      // Determine the best toast message when no HTML is found
+      const types = e.clipboardData?.types ?? [];
+      const items = e.clipboardData?.items;
+
+      // Check for media types (image/video/audio)
+      const mediaTypePattern = /^(image|video|audio)\//;
+      let mediaKind: string | undefined;
+      for (const t of types) {
+        const m = mediaTypePattern.exec(t);
+        if (m) { mediaKind = m[1]; break; }
+      }
+      if (!mediaKind && items) {
+        for (let i = 0; i < items.length; i++) {
+          const m = mediaTypePattern.exec(items[i].type);
+          if (m) { mediaKind = m[1]; break; }
+        }
+      }
+
+      if (mediaKind) {
+        showToast(`Clipboard contains ${mediaKind} data, not text content`);
+      } else if (types.includes('text/plain')) {
+        showToast('No HTML found in clipboard (plain text can be pasted as-is)');
       } else {
         showToast('No HTML found in clipboard');
       }
