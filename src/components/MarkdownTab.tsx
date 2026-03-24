@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkBreaks from 'remark-breaks';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize from 'rehype-sanitize';
 import { CopyIcon, CheckIcon, QuoteIcon } from '@primer/octicons-react';
@@ -40,6 +41,13 @@ export default function MarkdownTab({ markdown }: MarkdownTabProps) {
       // clipboard write failed silently
     }
   }, [markdown]);
+
+  const remarkPlugins = useMemo(
+    () => settings.brStyle === 'newline'
+      ? [remarkGfm, remarkBreaks]
+      : [remarkGfm],
+    [settings.brStyle],
+  );
 
   const rehypePlugins = useMemo(
     () => settings.allowRawHtml
@@ -92,7 +100,7 @@ export default function MarkdownTab({ markdown }: MarkdownTabProps) {
           </h2>
         </div>
         <div className="md-preview bg-gray-800 text-gray-200 p-4 rounded overflow-auto max-h-[50vh] text-sm">
-          <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={rehypePlugins}>
+          <ReactMarkdown remarkPlugins={remarkPlugins} rehypePlugins={rehypePlugins}>
             {markdown}
           </ReactMarkdown>
         </div>
