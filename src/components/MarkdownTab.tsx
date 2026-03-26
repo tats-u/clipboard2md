@@ -8,6 +8,7 @@ import { CopyIcon, CheckIcon, QuoteIcon } from '@primer/octicons-react';
 import CodeBlock from './CodeBlock';
 import { useSettings } from './SettingsContext';
 import { sanitizeSchema } from '../lib/settings';
+import { quoteMarkdown } from '../lib/quote-markdown';
 
 interface MarkdownTabProps {
   markdown: string;
@@ -30,10 +31,7 @@ export default function MarkdownTab({ markdown }: MarkdownTabProps) {
 
   const handleCopyAsQuote = useCallback(async () => {
     try {
-      const quoted = markdown
-        .split('\n')
-        .map((line) => (line === '' ? '>' : `> ${line}`))
-        .join('\n');
+      const quoted = quoteMarkdown(markdown);
       await navigator.clipboard.writeText(quoted);
       setQuoteCopied(true);
       setTimeout(() => setQuoteCopied(false), 2000);
