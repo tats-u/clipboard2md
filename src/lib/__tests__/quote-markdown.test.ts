@@ -6,13 +6,13 @@ describe('quoteMarkdown', () => {
     expect(quoteMarkdown('hello')).toBe('> hello');
   });
 
-  it('quotes multi-line text with blank line separator', () => {
-    expect(quoteMarkdown('a\n\nb\n')).toBe('> a\n>\n> b');
+  it('quotes multi-line text with blank line separator and preserves trailing newline', () => {
+    expect(quoteMarkdown('a\n\nb\n')).toBe('> a\n>\n> b\n');
   });
 
   it('does not add trailing > for trailing newline', () => {
     const result = quoteMarkdown('a\n\nb\n');
-    expect(result).not.toMatch(/>\s*$/);
+    expect(result).not.toMatch(/>\n?$/);
   });
 
   it('handles text without trailing newline', () => {
