@@ -8,7 +8,8 @@ import { visit } from 'unist-util-visit';
 import { toHtml } from 'hast-util-to-html';
 import type { Settings } from './settings';
 
-const BARE_AUTOLINK_PATTERN = /(?:https?:\/\/|www\.)[^\s<]+/g;
+const AUTOLINK_TOKEN_START = '\uE000';
+const AUTOLINK_TOKEN_END = '\uE001';
 
 function rehypeRemoveComments() {
   return (tree: any) => {
@@ -34,32 +35,47 @@ function remarkStripEmptyLinks() {
   };
 }
 
-function remarkBareAutolinks() {
-  return (tree: any) => {
-    visit(tree, 'link', (node: any, index: number | undefined, parent: any) => {
-      if (index === undefined || !parent) return;
-      if (node.children.length !== 1 || node.children[0].type !== 'text') return;
+function createBareAutolinkPlugin() {
+  const bareAutolinks = new Map<string, string>();
+  let nextBareAutolinkId = 0;
 
-      const text = node.children[0].value as string;
-      const url = node.url as string;
+  return {
+    plugin() {
+      return (tree: any) => {
+        visit(tree, 'link', (node: any, index: number | undefined, parent: any) => {
+          if (index === undefined || !parent) return;
+          if (node.children.length !== 1 || node.children[0].type !== 'text') return;
 
-      let bareText: string | null = null;
+          const text = node.children[0].value as string;
+          const url = node.url as string;
 
-      if (text === url) {
-        bareText = url;
-      } else if (
-        /^https?:\/\//.test(url) &&
-        text === url.replace(/^https?:\/\//, '') &&
-        text.startsWith('www.')
-      ) {
-        bareText = text;
+          let bareText: string | null = null;
+
+          if (text === url) {
+            bareText = url;
+          } else if (
+            /^https?:\/\//.test(url) &&
+            text === url.replace(/^https?:\/\//, '') &&
+            text.startsWith('www.')
+          ) {
+            bareText = text;
+          }
+
+          if (bareText && /^(https?:\/\/|www\.)/.test(bareText)) {
+            const token = `${AUTOLINK_TOKEN_START}${nextBareAutolinkId++}${AUTOLINK_TOKEN_END}`;
+            bareAutolinks.set(token, bareText);
+            parent.children[index] = { type: 'text', value: token };
+            return index;
+          }
+        });
+      };
+    },
+    restore(markdown: string) {
+      for (const [token, bareAutolink] of bareAutolinks) {
+        markdown = markdown.replaceAll(token, bareAutolink);
       }
-
-      if (bareText && /^(https?:\/\/|www\.)/.test(bareText)) {
-        parent.children[index] = { type: 'text', value: bareText };
-        return index;
-      }
-    });
+      return markdown;
+    },
   };
 }
 
@@ -97,8 +113,7 @@ function restoreBareAutolinkEscapes(markdown: string): string {
   return markdown
     .replace(/https\\:/g, 'https:')
     .replace(/http\\:/g, 'http:')
-    .replace(/www\\./g, 'www.')
-    .replace(BARE_AUTOLINK_PATTERN, (url) => url.replace(/\\_/g, '_'));
+    .replace(/www\\./g, 'www.');
 }
 
 export async function htmlToMarkdown(
@@ -108,6 +123,7 @@ export async function htmlToMarkdown(
   const bullet = settings?.listMarker ?? '-';
   const brStyle = settings?.brStyle ?? 'backslash';
   const rule = settings?.hrStyle ?? '*';
+  const bareAutolinks = createBareAutolinkPlugin();
 
   const result = await unified()
     .use(rehypeParse)
@@ -118,7 +134,7 @@ export async function htmlToMarkdown(
       },
     } as any)
     .use(remarkStripEmptyLinks)
-    .use(remarkBareAutolinks)
+    .use(bareAutolinks.plugin)
     .use(remarkGfm)
     .use(remarkStringify, {
       bullet,
@@ -135,6 +151,7 @@ export async function htmlToMarkdown(
   // remark-gfm escapes punctuation in bare URLs to prevent autolinks;
   // undo this since we intentionally want GFM autolinks.
   md = restoreBareAutolinkEscapes(md);
+  md = bareAutolinks.restore(md);
 
   return md;
 }
