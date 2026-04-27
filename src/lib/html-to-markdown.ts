@@ -8,6 +8,8 @@ import { visit } from 'unist-util-visit';
 import { toHtml } from 'hast-util-to-html';
 import type { Settings } from './settings';
 
+const BARE_AUTOLINK_PATTERN = /(?:https?:\/\/|www\.)[^\s<]+/g;
+
 function rehypeRemoveComments() {
   return (tree: any) => {
     const walk = (node: any) => {
@@ -96,7 +98,7 @@ function restoreBareAutolinkEscapes(markdown: string): string {
     .replace(/https\\:/g, 'https:')
     .replace(/http\\:/g, 'http:')
     .replace(/www\\./g, 'www.')
-    .replace(/(?:https?:\/\/|www\.)[^\s<]+/g, (url) => url.replace(/\\_/g, '_'));
+    .replace(BARE_AUTOLINK_PATTERN, (url) => url.replace(/\\_/g, '_'));
 }
 
 export async function htmlToMarkdown(
