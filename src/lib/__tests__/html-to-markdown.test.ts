@@ -73,6 +73,20 @@ describe('htmlToMarkdown', () => {
       expect(md.trim()).toBe('www.example.com');
     });
 
+    it('preserves underscores in bare URL autolinks', async () => {
+      const html =
+        '<a href="https://example.com/autolink_with_underscore">https://example.com/autolink_with_underscore</a>';
+      const md = await htmlToMarkdown(html);
+      expect(md.trim()).toBe('https://example.com/autolink_with_underscore');
+    });
+
+    it('preserves emphasis-like underscores inside bare URL autolinks', async () => {
+      const html =
+        '<a href="https://example.com/a(_b_)c">https://example.com/a(_b_)c</a>';
+      const md = await htmlToMarkdown(html);
+      expect(md.trim()).toBe('https://example.com/a(_b_)c');
+    });
+
     it('keeps markdown link syntax for non-autolink URLs', async () => {
       const html = '<a href="https://example.com">click here</a>';
       const md = await htmlToMarkdown(html);

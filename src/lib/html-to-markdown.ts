@@ -91,6 +91,14 @@ function createBreakHandler(brStyle: Settings['brStyle']) {
   };
 }
 
+function restoreBareAutolinkEscapes(markdown: string): string {
+  return markdown
+    .replace(/https\\:/g, 'https:')
+    .replace(/http\\:/g, 'http:')
+    .replace(/www\\./g, 'www.')
+    .replace(/(?:https?:\/\/|www\.)[^\s<]+/g, (url) => url.replace(/\\_/g, '_'));
+}
+
 export async function htmlToMarkdown(
   html: string,
   settings?: Partial<Settings>,
@@ -122,12 +130,9 @@ export async function htmlToMarkdown(
 
   let md = String(result);
 
-  // remark-gfm escapes colons/dots in bare URLs to prevent autolinks;
+  // remark-gfm escapes punctuation in bare URLs to prevent autolinks;
   // undo this since we intentionally want GFM autolinks.
-  md = md
-    .replace(/https\\:/g, 'https:')
-    .replace(/http\\:/g, 'http:')
-    .replace(/www\\./g, 'www.');
+  md = restoreBareAutolinkEscapes(md);
 
   return md;
 }
