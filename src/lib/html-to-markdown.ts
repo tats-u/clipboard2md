@@ -38,6 +38,7 @@ function getBareAutolinkLiteral(node: any): string | null {
 
   const text = node.children[0].value as string;
   const url = node.url as string;
+  const urlWithoutProtocol = url.replace(/^https?:\/\//, '');
 
   if (!/^(https?:\/\/|www\.)/.test(text)) return null;
 
@@ -45,7 +46,7 @@ function getBareAutolinkLiteral(node: any): string | null {
     return text;
   }
 
-  if (/^https?:\/\//.test(url) && text === url.replace(/^https?:\/\//, '') && text.startsWith('www.')) {
+  if (/^https?:\/\//.test(url) && text === urlWithoutProtocol && text.startsWith('www.')) {
     return text;
   }
 
@@ -53,17 +54,16 @@ function getBareAutolinkLiteral(node: any): string | null {
 }
 
 function canFormatLinkAsAutolink(node: any, state: any): boolean {
-  const raw = node.children?.length === 1 && node.children[0].type === 'text'
-    ? (node.children[0].value as string)
-    : '';
+  if (!node.children || node.children.length !== 1 || node.children[0].type !== 'text') {
+    return false;
+  }
+
+  const raw = node.children[0].value as string;
 
   return Boolean(
     !state.options.resourceLink &&
       node.url &&
       !node.title &&
-      node.children &&
-      node.children.length === 1 &&
-      node.children[0].type === 'text' &&
       (raw === node.url || `mailto:${raw}` === node.url) &&
       /^[a-z][a-z+.-]+:/i.test(node.url) &&
       !/[\0- <>\u007F]/.test(node.url),
