@@ -93,6 +93,12 @@ describe('htmlToMarkdown', () => {
       expect(md).toContain('[click here](https://example.com)');
     });
 
+    it('keeps markdown link syntax when the link title must be preserved', async () => {
+      const html = '<a href="https://example.com" title="Example">https://example.com</a>';
+      const md = await htmlToMarkdown(html);
+      expect(md.trim()).toBe('[https://example.com](https://example.com "Example")');
+    });
+
     it('outputs plain text for anchor without href', async () => {
       const html =
         '<a href="https://spec.commonmark.org/0.31.2/#example-43">Example 43</a>' +

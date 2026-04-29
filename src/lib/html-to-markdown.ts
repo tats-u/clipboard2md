@@ -1,15 +1,12 @@
 import { unified } from 'unified';
 import rehypeParse from 'rehype-parse';
 import rehypeRemark from 'rehype-remark';
-import { defaultHandlers } from 'hast-util-to-mdast';
+import { defaultHandlers as hastToMdastHandlers } from 'hast-util-to-mdast';
 import remarkGfm from 'remark-gfm';
 import remarkStringify from 'remark-stringify';
 import { visit } from 'unist-util-visit';
 import { toHtml } from 'hast-util-to-html';
 import type { Settings } from './settings';
-
-const AUTOLINK_TOKEN_START = '\uE000';
-const AUTOLINK_TOKEN_END = '\uE001';
 
 function rehypeRemoveComments() {
   return (tree: any) => {
@@ -35,48 +32,140 @@ function remarkStripEmptyLinks() {
   };
 }
 
-function createBareAutolinkPlugin() {
-  const bareAutolinks = new Map<string, string>();
-  let nextBareAutolinkId = 0;
+function getBareAutolinkLiteral(node: any): string | null {
+  if (node.title) return null;
+  if (node.children.length !== 1 || node.children[0].type !== 'text') return null;
 
-  return {
-    plugin() {
-      return (tree: any) => {
-        visit(tree, 'link', (node: any, index: number | undefined, parent: any) => {
-          if (index === undefined || !parent) return;
-          if (node.children.length !== 1 || node.children[0].type !== 'text') return;
+  const text = node.children[0].value as string;
+  const url = node.url as string;
 
-          const text = node.children[0].value as string;
-          const url = node.url as string;
+  if (!/^(https?:\/\/|www\.)/.test(text)) return null;
 
-          let bareText: string | null = null;
+  if (text === url) {
+    return text;
+  }
 
-          if (text === url) {
-            bareText = url;
-          } else if (
-            /^https?:\/\//.test(url) &&
-            text === url.replace(/^https?:\/\//, '') &&
-            text.startsWith('www.')
-          ) {
-            bareText = text;
-          }
+  if (/^https?:\/\//.test(url) && text === url.replace(/^https?:\/\//, '') && text.startsWith('www.')) {
+    return text;
+  }
 
-          if (bareText && /^(https?:\/\/|www\.)/.test(bareText)) {
-            const token = `${AUTOLINK_TOKEN_START}${nextBareAutolinkId++}${AUTOLINK_TOKEN_END}`;
-            bareAutolinks.set(token, bareText);
-            parent.children[index] = { type: 'text', value: token };
-            return index;
-          }
-        });
-      };
-    },
-    restore(markdown: string) {
-      for (const [token, bareAutolink] of bareAutolinks) {
-        markdown = markdown.replaceAll(token, bareAutolink);
-      }
-      return markdown;
-    },
+  return null;
+}
+
+function canFormatLinkAsAutolink(node: any, state: any): boolean {
+  const raw = node.children?.length === 1 && node.children[0].type === 'text'
+    ? (node.children[0].value as string)
+    : '';
+
+  return Boolean(
+    !state.options.resourceLink &&
+      node.url &&
+      !node.title &&
+      node.children &&
+      node.children.length === 1 &&
+      node.children[0].type === 'text' &&
+      (raw === node.url || `mailto:${raw}` === node.url) &&
+      /^[a-z][a-z+.-]+:/i.test(node.url) &&
+      !/[\0- <>\u007F]/.test(node.url),
+  );
+}
+
+function serializeDefaultLink(node: any, state: any, info: any): string {
+  const quote = state.options.quote === "'" ? "'" : '"';
+  const titleConstruct = quote === '"' ? 'titleQuote' : 'titleApostrophe';
+  const tracker = state.createTracker(info);
+
+  if (canFormatLinkAsAutolink(node, state)) {
+    const stack = state.stack;
+    state.stack = [];
+    const exit = state.enter('autolink');
+    let value = tracker.move('<');
+    value += tracker.move(
+      state.containerPhrasing(node, {
+        before: value,
+        after: '>',
+        ...tracker.current(),
+      }),
+    );
+    value += tracker.move('>');
+    exit();
+    state.stack = stack;
+    return value;
+  }
+
+  const exit = state.enter('link');
+  const exitLabel = state.enter('label');
+  let value = tracker.move('[');
+  value += tracker.move(
+    state.containerPhrasing(node, {
+      before: value,
+      after: '](',
+      ...tracker.current(),
+    }),
+  );
+  value += tracker.move('](');
+  exitLabel();
+
+  if ((!node.url && node.title) || /[\0- \u007F]/.test(node.url)) {
+    const exitDestination = state.enter('destinationLiteral');
+    value += tracker.move('<');
+    value += tracker.move(
+      state.safe(node.url, { before: value, after: '>', ...tracker.current() }),
+    );
+    value += tracker.move('>');
+    exitDestination();
+  } else {
+    const exitDestination = state.enter('destinationRaw');
+    value += tracker.move(
+      state.safe(node.url, {
+        before: value,
+        after: node.title ? ' ' : ')',
+        ...tracker.current(),
+      }),
+    );
+    exitDestination();
+  }
+
+  if (node.title) {
+    const exitTitle = state.enter(titleConstruct);
+    value += tracker.move(` ${quote}`);
+    value += tracker.move(
+      state.safe(node.title, {
+        before: value,
+        after: quote,
+        ...tracker.current(),
+      }),
+    );
+    value += tracker.move(quote);
+    exitTitle();
+  }
+
+  value += tracker.move(')');
+  exit();
+
+  return value;
+}
+
+function createLinkHandler() {
+  const handler = (node: any, _parent: any, state: any, info: any) => {
+    const bareAutolink = getBareAutolinkLiteral(node);
+    if (bareAutolink) {
+      return bareAutolink;
+    }
+
+    return serializeDefaultLink(node, state, info);
   };
+
+  handler.peek = (node: any, _parent: any, state: any) => {
+    const bareAutolink = getBareAutolinkLiteral(node);
+    if (bareAutolink) {
+      return bareAutolink.charAt(0);
+    }
+
+    return canFormatLinkAsAutolink(node, state) ? '<' : '[';
+  };
+
+  return handler;
 }
 
 /**
@@ -86,7 +175,7 @@ function createBareAutolinkPlugin() {
 function createTableHandler() {
   return (state: any, node: any) => {
     try {
-      return defaultHandlers.table(state, node);
+      return hastToMdastHandlers.table(state, node);
     } catch {
       // Non-GFM-compatible table — output as raw HTML block
       const html = toHtml(node, { allowDangerousHtml: true });
@@ -109,13 +198,6 @@ function createBreakHandler(brStyle: Settings['brStyle']) {
   };
 }
 
-function restoreBareAutolinkEscapes(markdown: string): string {
-  return markdown
-    .replace(/https\\:/g, 'https:')
-    .replace(/http\\:/g, 'http:')
-    .replace(/www\\./g, 'www.');
-}
-
 export async function htmlToMarkdown(
   html: string,
   settings?: Partial<Settings>,
@@ -123,7 +205,6 @@ export async function htmlToMarkdown(
   const bullet = settings?.listMarker ?? '-';
   const brStyle = settings?.brStyle ?? 'backslash';
   const rule = settings?.hrStyle ?? '*';
-  const bareAutolinks = createBareAutolinkPlugin();
 
   const result = await unified()
     .use(rehypeParse)
@@ -134,7 +215,6 @@ export async function htmlToMarkdown(
       },
     } as any)
     .use(remarkStripEmptyLinks)
-    .use(bareAutolinks.plugin)
     .use(remarkGfm)
     .use(remarkStringify, {
       bullet,
@@ -142,16 +222,10 @@ export async function htmlToMarkdown(
       setext: false,
       handlers: {
         break: createBreakHandler(brStyle),
+        link: createLinkHandler(),
       },
     })
     .process(html);
 
-  let md = String(result);
-
-  // remark-gfm escapes punctuation in bare URLs to prevent autolinks;
-  // undo this since we intentionally want GFM autolinks.
-  md = restoreBareAutolinkEscapes(md);
-  md = bareAutolinks.restore(md);
-
-  return md;
+  return String(result);
 }
