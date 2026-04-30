@@ -47,7 +47,10 @@ function getLinkNodeForMarkdown(
   linkTitleStyle: Settings['linkTitleStyle'],
 ) {
   const effectiveTitle = getEffectiveLinkTitle(node, linkTitleStyle);
-  if (effectiveTitle === node.title || (effectiveTitle === null && node.title == null)) {
+  if (
+    effectiveTitle === node.title ||
+    (effectiveTitle === null && (node.title === null || node.title === undefined))
+  ) {
     return node;
   }
 
@@ -62,7 +65,9 @@ function normalizeBareAutolinkLiteral(text: string, url: string): string {
     if (parsedUrl.pathname === '/' && !parsedUrl.search && !parsedUrl.hash) {
       return text.replace(/\/$/, '');
     }
-  } catch {}
+  } catch {
+    // Ignore invalid URLs and keep the original text unchanged.
+  }
 
   return text;
 }
