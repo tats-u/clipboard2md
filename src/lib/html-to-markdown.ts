@@ -185,9 +185,13 @@ function createRehypeRemarkHandlers(settings: Settings) {
     ...hastToMdastHandlers,
     table: createTableHandler(),
   } as Record<string, any>;
+  const tagNames = new Set(Object.keys(handlers));
+  for (const tagName of PRESERVED_SAFE_HTML_TAGS) {
+    tagNames.add(tagName);
+  }
 
   return Object.fromEntries(
-    [...new Set([...Object.keys(handlers), ...PRESERVED_SAFE_HTML_TAGS])].map((tagName) => [
+    Array.from(tagNames).map((tagName) => [
       tagName,
       (state: any, node: any, parent: any) => {
         if (shouldPreserveRawHtml(node, settings.allowRawHtml)) {
