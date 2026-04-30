@@ -1,7 +1,8 @@
 import { unified } from 'unified';
 import rehypeParse from 'rehype-parse';
 import rehypeRemark from 'rehype-remark';
-import { defaultHandlers } from 'hast-util-to-mdast';
+import { defaultHandlers as hastToMdastHandlers } from 'hast-util-to-mdast';
+import { defaultHandlers as mdastToMarkdownHandlers } from 'mdast-util-to-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkStringify from 'remark-stringify';
 import { visit } from 'unist-util-visit';
@@ -32,33 +33,49 @@ function remarkStripEmptyLinks() {
   };
 }
 
-function remarkBareAutolinks() {
-  return (tree: any) => {
-    visit(tree, 'link', (node: any, index: number | undefined, parent: any) => {
-      if (index === undefined || !parent) return;
-      if (node.children.length !== 1 || node.children[0].type !== 'text') return;
+function getBareAutolinkLiteral(node: any): string | null {
+  if (node.title) return null;
+  if (node.children.length !== 1 || node.children[0].type !== 'text') return null;
 
-      const text = node.children[0].value as string;
-      const url = node.url as string;
+  const text = node.children[0].value as string;
+  const url = node.url as string;
+  const urlWithoutProtocol = url.replace(/^https?:\/\//, '');
 
-      let bareText: string | null = null;
+  if (!/^(https?:\/\/|www\.)/.test(text)) return null;
 
-      if (text === url) {
-        bareText = url;
-      } else if (
-        /^https?:\/\//.test(url) &&
-        text === url.replace(/^https?:\/\//, '') &&
-        text.startsWith('www.')
-      ) {
-        bareText = text;
-      }
+  if (text === url) {
+    return text;
+  }
 
-      if (bareText && /^(https?:\/\/|www\.)/.test(bareText)) {
-        parent.children[index] = { type: 'text', value: bareText };
-        return index;
-      }
-    });
+  if (/^https?:\/\//.test(url) && text === urlWithoutProtocol && text.startsWith('www.')) {
+    return text;
+  }
+
+  return null;
+}
+
+function createLinkHandler() {
+  const defaultLinkHandler = mdastToMarkdownHandlers.link;
+
+  const handler = (node: any, _parent: any, state: any, info: any) => {
+    const bareAutolink = getBareAutolinkLiteral(node);
+    if (bareAutolink) {
+      return bareAutolink;
+    }
+
+    return defaultLinkHandler(node, _parent, state, info);
   };
+
+  handler.peek = (node: any, _parent: any, state: any) => {
+    const bareAutolink = getBareAutolinkLiteral(node);
+    if (bareAutolink) {
+      return bareAutolink.charAt(0);
+    }
+
+    return defaultLinkHandler.peek(node, _parent, state);
+  };
+
+  return handler;
 }
 
 /**
@@ -68,7 +85,7 @@ function remarkBareAutolinks() {
 function createTableHandler() {
   return (state: any, node: any) => {
     try {
-      return defaultHandlers.table(state, node);
+      return hastToMdastHandlers.table(state, node);
     } catch {
       // Non-GFM-compatible table — output as raw HTML block
       const html = toHtml(node, { allowDangerousHtml: true });
@@ -108,7 +125,6 @@ export async function htmlToMarkdown(
       },
     } as any)
     .use(remarkStripEmptyLinks)
-    .use(remarkBareAutolinks)
     .use(remarkGfm)
     .use(remarkStringify, {
       bullet,
@@ -116,18 +132,10 @@ export async function htmlToMarkdown(
       setext: false,
       handlers: {
         break: createBreakHandler(brStyle),
+        link: createLinkHandler(),
       },
     })
     .process(html);
 
-  let md = String(result);
-
-  // remark-gfm escapes colons/dots in bare URLs to prevent autolinks;
-  // undo this since we intentionally want GFM autolinks.
-  md = md
-    .replace(/https\\:/g, 'https:')
-    .replace(/http\\:/g, 'http:')
-    .replace(/www\\./g, 'www.');
-
-  return md;
+  return String(result);
 }
