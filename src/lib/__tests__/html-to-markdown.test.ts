@@ -259,16 +259,15 @@ describe('htmlToMarkdown', () => {
     it('preserves safe attributes and unwraps stripped span/div wrappers', async () => {
       const html = [
         '<div dir="auto">Hello <span lang="ja">こんにちは</span></div>',
-        '<div><span>你好</span> <span lang="ko">안녕하세요</span></div>',
+        '<div><span lang="zh">你好</span> <span lang="ko">안녕하세요</span></div>',
       ].join('');
 
       const md = await htmlToMarkdown(html, { allowRawHtml: true });
 
       expect(md).toContain('<div dir="auto">Hello <span lang="ja">こんにちは</span></div>');
-      expect(md).toContain('你好');
+      expect(md).toContain('<span lang="zh">你好</span>');
       expect(md).toContain('<span lang="ko">안녕하세요</span>');
       expect(md).not.toContain('<div>你好');
-      expect(md).not.toContain('<span>你好</span>');
     });
 
     it('preserves ruby tags when safe HTML is allowed', async () => {
@@ -279,6 +278,18 @@ describe('htmlToMarkdown', () => {
 
       expect(md).toContain('<ruby>不運<rt>ハードラック</rt></ruby>');
       expect(md).toContain('<ruby>踊<rt>ダンス</rt></ruby>');
+    });
+
+    it('preserves additional allowed safe HTML tags', async () => {
+      const html = [
+        '<dl><dt>用語</dt><dd><dfn>定義</dfn></dd></dl>',
+        '<p><i>italic</i> <b>bold</b> <s>strike</s></p>',
+      ].join('');
+
+      const md = await htmlToMarkdown(html, { allowRawHtml: true });
+
+      expect(md).toContain('<dl><dt>用語</dt><dd><dfn>定義</dfn></dd></dl>');
+      expect(md).toContain('<i>italic</i> <b>bold</b> <s>strike</s>');
     });
   });
 });

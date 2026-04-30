@@ -23,6 +23,19 @@ export const defaultSettings: Settings = {
 // class, style, on* handlers are NOT in any allow list so they are stripped.
 export const sanitizeSchema = {
   ...defaultSchema,
+  tagNames: [
+    ...(defaultSchema.tagNames || []),
+    'b',
+    'dd',
+    'dfn',
+    'dl',
+    'dt',
+    'i',
+    'rp',
+    'rt',
+    'ruby',
+    's',
+  ],
   attributes: {
     ...defaultSchema.attributes,
     // Add lang and dir as globally allowed attributes

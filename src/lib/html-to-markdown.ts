@@ -136,7 +136,18 @@ function createBreakHandler(brStyle: Settings['brStyle']) {
   };
 }
 
-const ALWAYS_PRESERVE_AS_HTML_TAGS = new Set(['ruby', 'rt', 'rp']);
+const PRESERVED_SAFE_HTML_TAGS = new Set([
+  'b',
+  'dd',
+  'dfn',
+  'dl',
+  'dt',
+  'i',
+  'rp',
+  'rt',
+  'ruby',
+  's',
+]);
 const MARKDOWN_COMPATIBLE_ATTRIBUTE_NAMES = new Map<string, Set<string>>([
   ['a', new Set(['href', 'title'])],
   ['img', new Set(['alt', 'src', 'title'])],
@@ -146,7 +157,7 @@ const MARKDOWN_COMPATIBLE_ATTRIBUTE_NAMES = new Map<string, Set<string>>([
   ['th', new Set(['align'])],
 ]);
 
-function hasPopulatedProperties(node: any): boolean {
+function hasNonEmptyPropertyValues(node: any): boolean {
   return Object.values(node.properties ?? {}).some((value) => {
     if (value === null || value === undefined) return false;
     if (Array.isArray(value)) return value.length > 0;
@@ -175,9 +186,9 @@ function createRawHtmlNode(state: any, node: any) {
 
 function shouldPreserveRawHtml(node: any, allowRawHtml: boolean): boolean {
   if (!allowRawHtml) return false;
-  if (ALWAYS_PRESERVE_AS_HTML_TAGS.has(node.tagName)) return true;
+  if (PRESERVED_SAFE_HTML_TAGS.has(node.tagName)) return true;
   if (hasOnlyMarkdownCompatibleAttributes(node)) return false;
-  return hasPopulatedProperties(node);
+  return hasNonEmptyPropertyValues(node);
 }
 
 function createRehypeRemarkHandlers(settings: Settings) {
@@ -187,14 +198,15 @@ function createRehypeRemarkHandlers(settings: Settings) {
   } as Record<string, any>;
 
   return Object.fromEntries(
-    Object.entries(handlers).map(([tagName, handler]) => [
+    [...new Set([...Object.keys(handlers), ...PRESERVED_SAFE_HTML_TAGS])].map((tagName) => [
       tagName,
       (state: any, node: any, parent: any) => {
         if (shouldPreserveRawHtml(node, settings.allowRawHtml)) {
           return createRawHtmlNode(state, node);
         }
 
-        return handler(state, node, parent);
+        const handler = handlers[tagName];
+        return handler ? handler(state, node, parent) : state.all(node);
       },
     ]),
   );
