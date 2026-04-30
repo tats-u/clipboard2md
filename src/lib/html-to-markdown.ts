@@ -136,7 +136,7 @@ function createBreakHandler(brStyle: Settings['brStyle']) {
   };
 }
 
-const PRESERVED_SAFE_HTML_TAGS = new Set<string>(preservedSafeHtmlTags);
+const preservedTagsSet = new Set<string>(preservedSafeHtmlTags);
 const MARKDOWN_COMPATIBLE_ATTRIBUTE_NAMES = new Map<string, Set<string>>([
   ['a', new Set(['href', 'title'])],
   ['img', new Set(['alt', 'src', 'title'])],
@@ -175,8 +175,9 @@ function createRawHtmlNode(state: any, node: any) {
 
 function shouldPreserveRawHtml(node: any, allowRawHtml: boolean): boolean {
   if (!allowRawHtml) return false;
-  if (PRESERVED_SAFE_HTML_TAGS.has(node.tagName)) return true;
-  if (hasOnlyMarkdownCompatibleAttributes(node)) return false;
+  if (preservedTagsSet.has(node.tagName)) return true;
+  const hasNonMarkdownCompatibleAttributes = !hasOnlyMarkdownCompatibleAttributes(node);
+  if (!hasNonMarkdownCompatibleAttributes) return false;
   return hasNonEmptyPropertyValues(node);
 }
 
@@ -186,7 +187,7 @@ function createRehypeRemarkHandlers(settings: Settings) {
     table: createTableHandler(),
   } as Record<string, any>;
   const tagNames = new Set(Object.keys(handlers));
-  for (const tagName of PRESERVED_SAFE_HTML_TAGS) {
+  for (const tagName of preservedTagsSet) {
     tagNames.add(tagName);
   }
 
