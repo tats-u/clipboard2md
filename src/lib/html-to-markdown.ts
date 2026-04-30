@@ -33,8 +33,35 @@ function remarkStripEmptyLinks() {
   };
 }
 
-function getBareAutolinkLiteral(node: any): string | null {
-  if (node.title) return null;
+function getEffectiveLinkTitle(
+  node: any,
+  linkTitleStyle: Settings['linkTitleStyle'],
+): string | null {
+  if (linkTitleStyle === 'remove-all') return null;
+  if (linkTitleStyle === 'remove-matching-url' && node.title === node.url) return null;
+  return typeof node.title === 'string' ? node.title : null;
+}
+
+function getLinkNodeForMarkdown(
+  node: any,
+  linkTitleStyle: Settings['linkTitleStyle'],
+) {
+  const effectiveTitle = getEffectiveLinkTitle(node, linkTitleStyle);
+  if (
+    effectiveTitle === node.title ||
+    (effectiveTitle === null && (node.title === null || node.title === undefined))
+  ) {
+    return node;
+  }
+
+  return { ...node, title: effectiveTitle };
+}
+
+function getBareAutolinkLiteral(
+  node: any,
+  linkTitleStyle: Settings['linkTitleStyle'],
+): string | null {
+  if (getEffectiveLinkTitle(node, linkTitleStyle)) return null;
   if (node.children.length !== 1 || node.children[0].type !== 'text') return null;
 
   const text = node.children[0].value as string;
@@ -54,25 +81,25 @@ function getBareAutolinkLiteral(node: any): string | null {
   return null;
 }
 
-function createLinkHandler() {
+function createLinkHandler(linkTitleStyle: Settings['linkTitleStyle']) {
   const defaultLinkHandler = mdastToMarkdownHandlers.link;
 
   const handler = (node: any, _parent: any, state: any, info: any) => {
-    const bareAutolink = getBareAutolinkLiteral(node);
+    const bareAutolink = getBareAutolinkLiteral(node, linkTitleStyle);
     if (bareAutolink) {
       return bareAutolink;
     }
 
-    return defaultLinkHandler(node, _parent, state, info);
+    return defaultLinkHandler(getLinkNodeForMarkdown(node, linkTitleStyle), _parent, state, info);
   };
 
   handler.peek = (node: any, _parent: any, state: any) => {
-    const bareAutolink = getBareAutolinkLiteral(node);
+    const bareAutolink = getBareAutolinkLiteral(node, linkTitleStyle);
     if (bareAutolink) {
       return bareAutolink.charAt(0);
     }
 
-    return defaultLinkHandler.peek(node, _parent, state);
+    return defaultLinkHandler.peek(getLinkNodeForMarkdown(node, linkTitleStyle), _parent, state);
   };
 
   return handler;
@@ -115,6 +142,7 @@ export async function htmlToMarkdown(
   const bullet = settings?.listMarker ?? '-';
   const brStyle = settings?.brStyle ?? 'backslash';
   const rule = settings?.hrStyle ?? '*';
+  const linkTitleStyle = settings?.linkTitleStyle ?? 'remove-matching-url';
 
   const result = await unified()
     .use(rehypeParse)
@@ -132,7 +160,7 @@ export async function htmlToMarkdown(
       setext: false,
       handlers: {
         break: createBreakHandler(brStyle),
-        link: createLinkHandler(),
+        link: createLinkHandler(linkTitleStyle),
       },
     })
     .process(html);

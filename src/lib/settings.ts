@@ -4,6 +4,7 @@ export interface Settings {
   listMarker: '-' | '*' | '+';
   brStyle: 'backslash' | 'spaces' | 'newline';
   hrStyle: '*' | '-' | '_';
+  linkTitleStyle: 'remove-all' | 'remove-matching-url' | 'preserve';
   allowRawHtml: boolean;
 }
 
@@ -11,6 +12,7 @@ export const defaultSettings: Settings = {
   listMarker: '-',
   brStyle: 'backslash',
   hrStyle: '*',
+  linkTitleStyle: 'remove-matching-url',
   allowRawHtml: true,
 };
 
