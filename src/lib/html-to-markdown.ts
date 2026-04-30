@@ -36,10 +36,22 @@ function remarkStripEmptyLinks() {
 function getEffectiveLinkTitle(
   node: any,
   linkTitleStyle: Settings['linkTitleStyle'],
-): string | null | undefined {
+): string | null {
   if (linkTitleStyle === 'remove-all') return null;
   if (linkTitleStyle === 'remove-matching-url' && node.title === node.url) return null;
-  return node.title;
+  return typeof node.title === 'string' ? node.title : null;
+}
+
+function getLinkNodeForMarkdown(
+  node: any,
+  linkTitleStyle: Settings['linkTitleStyle'],
+) {
+  const effectiveTitle = getEffectiveLinkTitle(node, linkTitleStyle);
+  if (effectiveTitle === node.title || (effectiveTitle === null && node.title == null)) {
+    return node;
+  }
+
+  return { ...node, title: effectiveTitle };
 }
 
 function normalizeBareAutolinkLiteral(text: string, url: string): string {
@@ -88,12 +100,7 @@ function createLinkHandler(linkTitleStyle: Settings['linkTitleStyle']) {
       return bareAutolink;
     }
 
-    return defaultLinkHandler(
-      { ...node, title: getEffectiveLinkTitle(node, linkTitleStyle) },
-      _parent,
-      state,
-      info,
-    );
+    return defaultLinkHandler(getLinkNodeForMarkdown(node, linkTitleStyle), _parent, state, info);
   };
 
   handler.peek = (node: any, _parent: any, state: any) => {
@@ -102,11 +109,7 @@ function createLinkHandler(linkTitleStyle: Settings['linkTitleStyle']) {
       return bareAutolink.charAt(0);
     }
 
-    return defaultLinkHandler.peek(
-      { ...node, title: getEffectiveLinkTitle(node, linkTitleStyle) },
-      _parent,
-      state,
-    );
+    return defaultLinkHandler.peek(getLinkNodeForMarkdown(node, linkTitleStyle), _parent, state);
   };
 
   return handler;
