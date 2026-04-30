@@ -95,8 +95,26 @@ describe('htmlToMarkdown', () => {
 
     it('keeps markdown link syntax when the link title must be preserved', async () => {
       const html = '<a href="https://example.com" title="Example">https://example.com</a>';
-      const md = await htmlToMarkdown(html);
+      const md = await htmlToMarkdown(html, { linkTitleStyle: 'preserve' });
       expect(md.trim()).toBe('[https://example.com](https://example.com "Example")');
+    });
+
+    it('removes matching link titles by default and emits a bare autolink when possible', async () => {
+      const html = '<a href="http://example.com/" title="http://example.com/">http://example.com/</a>';
+      const md = await htmlToMarkdown(html);
+      expect(md.trim()).toBe('http://example.com');
+    });
+
+    it('removes all link titles when configured', async () => {
+      const html = '<a href="https://example.com" title="Example">click here</a>';
+      const md = await htmlToMarkdown(html, { linkTitleStyle: 'remove-all' });
+      expect(md.trim()).toBe('[click here](https://example.com)');
+    });
+
+    it('keeps matching link titles when configured not to strip them', async () => {
+      const html = '<a href="http://example.com/" title="http://example.com/">http://example.com/</a>';
+      const md = await htmlToMarkdown(html, { linkTitleStyle: 'preserve' });
+      expect(md.trim()).toBe('[http://example.com/](http://example.com/ "http://example.com/")');
     });
 
     it('outputs plain text for anchor without href', async () => {

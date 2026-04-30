@@ -33,8 +33,33 @@ function remarkStripEmptyLinks() {
   };
 }
 
-function getBareAutolinkLiteral(node: any): string | null {
-  if (node.title) return null;
+function getEffectiveLinkTitle(
+  node: any,
+  linkTitleStyle: Settings['linkTitleStyle'],
+): string | null | undefined {
+  if (linkTitleStyle === 'remove-all') return null;
+  if (linkTitleStyle === 'remove-matching-url' && node.title === node.url) return null;
+  return node.title;
+}
+
+function normalizeBareAutolinkLiteral(text: string, url: string): string {
+  if (!/^https?:\/\/|^www\./.test(text)) return text;
+
+  try {
+    const parsedUrl = new URL(url);
+    if (parsedUrl.pathname === '/' && !parsedUrl.search && !parsedUrl.hash) {
+      return text.replace(/\/$/, '');
+    }
+  } catch {}
+
+  return text;
+}
+
+function getBareAutolinkLiteral(
+  node: any,
+  linkTitleStyle: Settings['linkTitleStyle'],
+): string | null {
+  if (getEffectiveLinkTitle(node, linkTitleStyle)) return null;
   if (node.children.length !== 1 || node.children[0].type !== 'text') return null;
 
   const text = node.children[0].value as string;
@@ -44,35 +69,44 @@ function getBareAutolinkLiteral(node: any): string | null {
   if (!/^(https?:\/\/|www\.)/.test(text)) return null;
 
   if (text === url) {
-    return text;
+    return normalizeBareAutolinkLiteral(text, url);
   }
 
   if (/^https?:\/\//.test(url) && text === urlWithoutProtocol && text.startsWith('www.')) {
-    return text;
+    return normalizeBareAutolinkLiteral(text, url);
   }
 
   return null;
 }
 
-function createLinkHandler() {
+function createLinkHandler(linkTitleStyle: Settings['linkTitleStyle']) {
   const defaultLinkHandler = mdastToMarkdownHandlers.link;
 
   const handler = (node: any, _parent: any, state: any, info: any) => {
-    const bareAutolink = getBareAutolinkLiteral(node);
+    const bareAutolink = getBareAutolinkLiteral(node, linkTitleStyle);
     if (bareAutolink) {
       return bareAutolink;
     }
 
-    return defaultLinkHandler(node, _parent, state, info);
+    return defaultLinkHandler(
+      { ...node, title: getEffectiveLinkTitle(node, linkTitleStyle) },
+      _parent,
+      state,
+      info,
+    );
   };
 
   handler.peek = (node: any, _parent: any, state: any) => {
-    const bareAutolink = getBareAutolinkLiteral(node);
+    const bareAutolink = getBareAutolinkLiteral(node, linkTitleStyle);
     if (bareAutolink) {
       return bareAutolink.charAt(0);
     }
 
-    return defaultLinkHandler.peek(node, _parent, state);
+    return defaultLinkHandler.peek(
+      { ...node, title: getEffectiveLinkTitle(node, linkTitleStyle) },
+      _parent,
+      state,
+    );
   };
 
   return handler;
@@ -115,6 +149,7 @@ export async function htmlToMarkdown(
   const bullet = settings?.listMarker ?? '-';
   const brStyle = settings?.brStyle ?? 'backslash';
   const rule = settings?.hrStyle ?? '*';
+  const linkTitleStyle = settings?.linkTitleStyle ?? 'remove-matching-url';
 
   const result = await unified()
     .use(rehypeParse)
@@ -132,7 +167,7 @@ export async function htmlToMarkdown(
       setext: false,
       handlers: {
         break: createBreakHandler(brStyle),
-        link: createLinkHandler(),
+        link: createLinkHandler(linkTitleStyle),
       },
     })
     .process(html);

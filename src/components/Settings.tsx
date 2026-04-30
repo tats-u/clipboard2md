@@ -107,6 +107,29 @@ export default function SettingsPanel() {
             </div>
           </div>
 
+          <div className="mb-4">
+            <label className="text-xs text-gray-400 block mb-1.5">Link title</label>
+            <div className="flex flex-col gap-2">
+              {([
+                { value: 'remove-all', label: 'Strip all' },
+                { value: 'remove-matching-url', label: 'Strip matching URL' },
+                { value: 'preserve', label: 'Keep' },
+              ] as const).map(({ value, label }) => (
+                <button
+                  key={value}
+                  onClick={() => updateSettings({ linkTitleStyle: value })}
+                  className={`px-3 py-1 text-sm rounded border cursor-pointer transition-colors text-left
+                    ${settings.linkTitleStyle === value
+                      ? 'border-accent text-accent bg-accent/10'
+                      : 'border-gray-700 text-gray-400 hover:border-gray-500'
+                    }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Allow raw HTML */}
           <div>
             <label className="flex items-center gap-2 text-xs text-gray-300 cursor-pointer">
