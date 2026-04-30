@@ -146,7 +146,7 @@ const MARKDOWN_COMPATIBLE_ATTRIBUTE_NAMES = new Map<string, Set<string>>([
   ['th', new Set(['align'])],
 ]);
 
-function hasMeaningfulProperties(node: any): boolean {
+function hasPopulatedProperties(node: any): boolean {
   return Object.values(node.properties ?? {}).some((value) => {
     if (value === null || value === undefined) return false;
     if (Array.isArray(value)) return value.length > 0;
@@ -156,9 +156,12 @@ function hasMeaningfulProperties(node: any): boolean {
 }
 
 function hasOnlyMarkdownCompatibleAttributes(node: any): boolean {
+  const propertyNames = Object.keys(node.properties ?? {});
+  if (propertyNames.length === 0) return true;
+
   const allowedAttributes = MARKDOWN_COMPATIBLE_ATTRIBUTE_NAMES.get(node.tagName);
   if (!allowedAttributes) return false;
-  return Object.keys(node.properties ?? {}).every((propertyName) => allowedAttributes.has(propertyName));
+  return propertyNames.every((propertyName) => allowedAttributes.has(propertyName));
 }
 
 function createRawHtmlNode(state: any, node: any) {
@@ -173,8 +176,8 @@ function createRawHtmlNode(state: any, node: any) {
 function shouldPreserveRawHtml(node: any, allowRawHtml: boolean): boolean {
   if (!allowRawHtml) return false;
   if (ALWAYS_PRESERVE_AS_HTML_TAGS.has(node.tagName)) return true;
-  if (!hasMeaningfulProperties(node)) return false;
-  return !hasOnlyMarkdownCompatibleAttributes(node);
+  if (hasOnlyMarkdownCompatibleAttributes(node)) return false;
+  return hasPopulatedProperties(node);
 }
 
 function createRehypeRemarkHandlers(settings: Settings) {
