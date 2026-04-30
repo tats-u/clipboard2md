@@ -2,6 +2,7 @@ import { unified } from 'unified';
 import rehypeParse from 'rehype-parse';
 import rehypeRemark from 'rehype-remark';
 import { defaultHandlers as hastToMdastHandlers } from 'hast-util-to-mdast';
+import { defaultHandlers as mdastToMarkdownHandlers } from 'mdast-util-to-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkStringify from 'remark-stringify';
 import { visit } from 'unist-util-visit';
@@ -53,107 +54,16 @@ function getBareAutolinkLiteral(node: any): string | null {
   return null;
 }
 
-function canFormatLinkAsAutolink(node: any, state: any): boolean {
-  if (!node.children || node.children.length !== 1 || node.children[0].type !== 'text') {
-    return false;
-  }
-
-  const raw = node.children[0].value as string;
-
-  return Boolean(
-    !state.options.resourceLink &&
-      node.url &&
-      !node.title &&
-      (raw === node.url || `mailto:${raw}` === node.url) &&
-      /^[a-z][a-z+.-]+:/i.test(node.url) &&
-      !/[\0- <>\u007F]/.test(node.url),
-  );
-}
-
-function serializeDefaultLink(node: any, state: any, info: any): string {
-  const quote = state.options.quote === "'" ? "'" : '"';
-  const titleConstruct = quote === '"' ? 'titleQuote' : 'titleApostrophe';
-  const tracker = state.createTracker(info);
-
-  if (canFormatLinkAsAutolink(node, state)) {
-    const stack = state.stack;
-    state.stack = [];
-    const exit = state.enter('autolink');
-    let value = tracker.move('<');
-    value += tracker.move(
-      state.containerPhrasing(node, {
-        before: value,
-        after: '>',
-        ...tracker.current(),
-      }),
-    );
-    value += tracker.move('>');
-    exit();
-    state.stack = stack;
-    return value;
-  }
-
-  const exit = state.enter('link');
-  const exitLabel = state.enter('label');
-  let value = tracker.move('[');
-  value += tracker.move(
-    state.containerPhrasing(node, {
-      before: value,
-      after: '](',
-      ...tracker.current(),
-    }),
-  );
-  value += tracker.move('](');
-  exitLabel();
-
-  if ((!node.url && node.title) || /[\0- \u007F]/.test(node.url)) {
-    const exitDestination = state.enter('destinationLiteral');
-    value += tracker.move('<');
-    value += tracker.move(
-      state.safe(node.url, { before: value, after: '>', ...tracker.current() }),
-    );
-    value += tracker.move('>');
-    exitDestination();
-  } else {
-    const exitDestination = state.enter('destinationRaw');
-    value += tracker.move(
-      state.safe(node.url, {
-        before: value,
-        after: node.title ? ' ' : ')',
-        ...tracker.current(),
-      }),
-    );
-    exitDestination();
-  }
-
-  if (node.title) {
-    const exitTitle = state.enter(titleConstruct);
-    value += tracker.move(` ${quote}`);
-    value += tracker.move(
-      state.safe(node.title, {
-        before: value,
-        after: quote,
-        ...tracker.current(),
-      }),
-    );
-    value += tracker.move(quote);
-    exitTitle();
-  }
-
-  value += tracker.move(')');
-  exit();
-
-  return value;
-}
-
 function createLinkHandler() {
+  const defaultLinkHandler = mdastToMarkdownHandlers.link;
+
   const handler = (node: any, _parent: any, state: any, info: any) => {
     const bareAutolink = getBareAutolinkLiteral(node);
     if (bareAutolink) {
       return bareAutolink;
     }
 
-    return serializeDefaultLink(node, state, info);
+    return defaultLinkHandler(node, _parent, state, info);
   };
 
   handler.peek = (node: any, _parent: any, state: any) => {
@@ -162,7 +72,7 @@ function createLinkHandler() {
       return bareAutolink.charAt(0);
     }
 
-    return canFormatLinkAsAutolink(node, state) ? '<' : '[';
+    return defaultLinkHandler.peek(node, _parent, state);
   };
 
   return handler;
