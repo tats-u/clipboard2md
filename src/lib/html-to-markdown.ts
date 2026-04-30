@@ -8,7 +8,7 @@ import remarkGfm from 'remark-gfm';
 import remarkStringify from 'remark-stringify';
 import { visit } from 'unist-util-visit';
 import { toHtml } from 'hast-util-to-html';
-import { sanitizeSchema, type Settings } from './settings';
+import { preservedSafeHtmlTags, sanitizeSchema, type Settings } from './settings';
 
 function rehypeRemoveComments() {
   return (tree: any) => {
@@ -136,18 +136,7 @@ function createBreakHandler(brStyle: Settings['brStyle']) {
   };
 }
 
-const PRESERVED_SAFE_HTML_TAGS = new Set([
-  'b',
-  'dd',
-  'dfn',
-  'dl',
-  'dt',
-  'i',
-  'rp',
-  'rt',
-  'ruby',
-  's',
-]);
+const PRESERVED_SAFE_HTML_TAGS = new Set<string>(preservedSafeHtmlTags);
 const MARKDOWN_COMPATIBLE_ATTRIBUTE_NAMES = new Map<string, Set<string>>([
   ['a', new Set(['href', 'title'])],
   ['img', new Set(['alt', 'src', 'title'])],

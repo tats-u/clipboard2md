@@ -16,6 +16,19 @@ export const defaultSettings: Settings = {
   allowRawHtml: true,
 };
 
+export const preservedSafeHtmlTags = [
+  'b',
+  'dd',
+  'dfn',
+  'dl',
+  'dt',
+  'i',
+  'rp',
+  'rt',
+  'ruby',
+  's',
+] as const;
+
 // Extend GitHub's default sanitization schema with additional safe attributes.
 // The default already allows: dl, dt, dd, ruby, rt, rp, details, summary,
 // abbr, mark, figure, figcaption, ins, del, sub, sup, kbd, var, samp, tables, etc.
@@ -25,16 +38,7 @@ export const sanitizeSchema = {
   ...defaultSchema,
   tagNames: [
     ...(defaultSchema.tagNames || []),
-    'b',
-    'dd',
-    'dfn',
-    'dl',
-    'dt',
-    'i',
-    'rp',
-    'rt',
-    'ruby',
-    's',
+    ...preservedSafeHtmlTags,
   ],
   attributes: {
     ...defaultSchema.attributes,
