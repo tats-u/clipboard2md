@@ -57,7 +57,7 @@ function getLinkNodeForMarkdown(
   return { ...node, title: effectiveTitle };
 }
 
-function normalizeBareAutolinkLiteral(text: string, url: string): string {
+function normalizeAutolinkText(text: string, url: string): string {
   if (!/^https?:\/\/|^www\./.test(text)) return text;
 
   try {
@@ -86,11 +86,11 @@ function getBareAutolinkLiteral(
   if (!/^(https?:\/\/|www\.)/.test(text)) return null;
 
   if (text === url) {
-    return normalizeBareAutolinkLiteral(text, url);
+    return normalizeAutolinkText(text, url);
   }
 
   if (/^https?:\/\//.test(url) && text === urlWithoutProtocol && text.startsWith('www.')) {
-    return normalizeBareAutolinkLiteral(text, url);
+    return normalizeAutolinkText(text, url);
   }
 
   return null;
