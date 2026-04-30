@@ -254,4 +254,31 @@ describe('htmlToMarkdown', () => {
       expect(md).toContain('standard convention');
     });
   });
+
+  describe('safe HTML preservation', () => {
+    it('preserves safe attributes and unwraps stripped span/div wrappers', async () => {
+      const html = [
+        '<div dir="auto">Hello <span lang="ja">こんにちは</span></div>',
+        '<div><span>你好</span> <span lang="ko">안녕하세요</span></div>',
+      ].join('');
+
+      const md = await htmlToMarkdown(html, { allowRawHtml: true });
+
+      expect(md).toContain('<div dir="auto">Hello <span lang="ja">こんにちは</span></div>');
+      expect(md).toContain('你好');
+      expect(md).toContain('<span lang="ko">안녕하세요</span>');
+      expect(md).not.toContain('<div>你好');
+      expect(md).not.toContain('<span>你好</span>');
+    });
+
+    it('preserves ruby tags when safe HTML is allowed', async () => {
+      const html =
+        '<p><ruby>不運<rt>ハードラック</rt></ruby>と<ruby>踊<rt>ダンス</rt></ruby>っちまったんだよ……</p>';
+
+      const md = await htmlToMarkdown(html, { allowRawHtml: true });
+
+      expect(md).toContain('<ruby>不運<rt>ハードラック</rt></ruby>');
+      expect(md).toContain('<ruby>踊<rt>ダンス</rt></ruby>');
+    });
+  });
 });

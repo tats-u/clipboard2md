@@ -1,5 +1,6 @@
 import { unified } from 'unified';
 import rehypeParse from 'rehype-parse';
+import rehypeSanitize from 'rehype-sanitize';
 import rehypeRemark from 'rehype-remark';
 import { defaultHandlers as hastToMdastHandlers } from 'hast-util-to-mdast';
 import { defaultHandlers as mdastToMarkdownHandlers } from 'mdast-util-to-markdown';
@@ -7,7 +8,7 @@ import remarkGfm from 'remark-gfm';
 import remarkStringify from 'remark-stringify';
 import { visit } from 'unist-util-visit';
 import { toHtml } from 'hast-util-to-html';
-import type { Settings } from './settings';
+import { sanitizeSchema, type Settings } from './settings';
 
 function rehypeRemoveComments() {
   return (tree: any) => {
@@ -135,32 +136,95 @@ function createBreakHandler(brStyle: Settings['brStyle']) {
   };
 }
 
+const ALWAYS_PRESERVE_AS_HTML_TAGS = new Set(['ruby', 'rt', 'rp']);
+const MARKDOWN_COMPATIBLE_ATTRIBUTE_NAMES = new Map<string, Set<string>>([
+  ['a', new Set(['href', 'title'])],
+  ['img', new Set(['alt', 'src', 'title'])],
+  ['li', new Set(['checked'])],
+  ['ol', new Set(['start'])],
+  ['td', new Set(['align'])],
+  ['th', new Set(['align'])],
+]);
+
+function hasMeaningfulProperties(node: any): boolean {
+  return Object.values(node.properties ?? {}).some((value) => {
+    if (value === null || value === undefined) return false;
+    if (Array.isArray(value)) return value.length > 0;
+    if (typeof value === 'boolean') return value;
+    return String(value).length > 0;
+  });
+}
+
+function hasOnlyMarkdownCompatibleAttributes(node: any): boolean {
+  const allowedAttributes = MARKDOWN_COMPATIBLE_ATTRIBUTE_NAMES.get(node.tagName);
+  if (!allowedAttributes) return false;
+  return Object.keys(node.properties ?? {}).every((propertyName) => allowedAttributes.has(propertyName));
+}
+
+function createRawHtmlNode(state: any, node: any) {
+  const result = {
+    type: 'html',
+    value: toHtml(node, { allowDangerousHtml: true }),
+  };
+  state.patch(node, result);
+  return result;
+}
+
+function shouldPreserveRawHtml(node: any, allowRawHtml: boolean): boolean {
+  if (!allowRawHtml) return false;
+  if (ALWAYS_PRESERVE_AS_HTML_TAGS.has(node.tagName)) return true;
+  if (!hasMeaningfulProperties(node)) return false;
+  return !hasOnlyMarkdownCompatibleAttributes(node);
+}
+
+function createRehypeRemarkHandlers(settings: Settings) {
+  const handlers = {
+    ...hastToMdastHandlers,
+    table: createTableHandler(),
+  } as Record<string, any>;
+
+  return Object.fromEntries(
+    Object.entries(handlers).map(([tagName, handler]) => [
+      tagName,
+      (state: any, node: any, parent: any) => {
+        if (shouldPreserveRawHtml(node, settings.allowRawHtml)) {
+          return createRawHtmlNode(state, node);
+        }
+
+        return handler(state, node, parent);
+      },
+    ]),
+  );
+}
+
 export async function htmlToMarkdown(
   html: string,
   settings?: Partial<Settings>,
 ): Promise<string> {
-  const bullet = settings?.listMarker ?? '-';
-  const brStyle = settings?.brStyle ?? 'backslash';
-  const rule = settings?.hrStyle ?? '*';
-  const linkTitleStyle = settings?.linkTitleStyle ?? 'remove-matching-url';
+  const resolvedSettings: Settings = {
+    listMarker: settings?.listMarker ?? '-',
+    brStyle: settings?.brStyle ?? 'backslash',
+    hrStyle: settings?.hrStyle ?? '*',
+    linkTitleStyle: settings?.linkTitleStyle ?? 'remove-matching-url',
+    allowRawHtml: settings?.allowRawHtml ?? true,
+  };
 
   const result = await unified()
     .use(rehypeParse)
     .use(rehypeRemoveComments)
+    .use(rehypeSanitize, sanitizeSchema)
     .use(rehypeRemark, {
-      handlers: {
-        table: createTableHandler(),
-      },
+      handlers: createRehypeRemarkHandlers(resolvedSettings),
     } as any)
     .use(remarkStripEmptyLinks)
     .use(remarkGfm)
     .use(remarkStringify, {
-      bullet,
-      rule,
+      bullet: resolvedSettings.listMarker,
+      rule: resolvedSettings.hrStyle,
       setext: false,
       handlers: {
-        break: createBreakHandler(brStyle),
-        link: createLinkHandler(linkTitleStyle),
+        break: createBreakHandler(resolvedSettings.brStyle),
+        link: createLinkHandler(resolvedSettings.linkTitleStyle),
       },
     })
     .process(html);
