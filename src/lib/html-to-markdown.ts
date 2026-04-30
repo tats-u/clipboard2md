@@ -57,19 +57,6 @@ function getLinkNodeForMarkdown(
   return { ...node, title: effectiveTitle };
 }
 
-function normalizeAutolinkText(text: string, url: string): string {
-  if (!/^(https?:\/\/|www\.)/.test(text)) return text;
-
-  try {
-    const parsedUrl = new URL(url);
-    if (parsedUrl.pathname === '/' && !parsedUrl.search && !parsedUrl.hash) {
-      return text.replace(/\/$/, '');
-    }
-  } catch {}
-
-  return text;
-}
-
 function getBareAutolinkLiteral(
   node: any,
   linkTitleStyle: Settings['linkTitleStyle'],
@@ -84,11 +71,11 @@ function getBareAutolinkLiteral(
   if (!/^(https?:\/\/|www\.)/.test(text)) return null;
 
   if (text === url) {
-    return normalizeAutolinkText(text, url);
+    return text;
   }
 
   if (/^https?:\/\//.test(url) && text === urlWithoutProtocol && text.startsWith('www.')) {
-    return normalizeAutolinkText(text, url);
+    return text;
   }
 
   return null;

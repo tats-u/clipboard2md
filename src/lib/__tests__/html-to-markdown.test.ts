@@ -102,7 +102,7 @@ describe('htmlToMarkdown', () => {
     it('removes matching link titles by default and emits a bare autolink when possible', async () => {
       const html = '<a href="http://example.com/" title="http://example.com/">http://example.com/</a>';
       const md = await htmlToMarkdown(html);
-      expect(md.trim()).toBe('http://example.com');
+      expect(md.trim()).toBe('http://example.com/');
     });
 
     it('removes all link titles when configured', async () => {
