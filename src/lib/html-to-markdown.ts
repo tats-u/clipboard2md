@@ -58,16 +58,14 @@ function getLinkNodeForMarkdown(
 }
 
 function normalizeAutolinkText(text: string, url: string): string {
-  if (!/^https?:\/\/|^www\./.test(text)) return text;
+  if (!/^(https?:\/\/|www\.)/.test(text)) return text;
 
   try {
     const parsedUrl = new URL(url);
     if (parsedUrl.pathname === '/' && !parsedUrl.search && !parsedUrl.hash) {
       return text.replace(/\/$/, '');
     }
-  } catch {
-    // Ignore invalid URLs and keep the original text unchanged.
-  }
+  } catch {}
 
   return text;
 }
