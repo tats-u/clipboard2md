@@ -22,10 +22,10 @@ function rehypeRemoveComments() {
   };
 }
 
-function rehypeDropRedundantLtrDir() {
+function rehypeDropDirWithoutLang() {
   return (tree: any) => {
     visit(tree, 'element', (node: any) => {
-      if (node.properties?.dir !== 'ltr') return;
+      if (typeof node.properties?.dir !== 'string' || node.properties.dir.length === 0) return;
       if (typeof node.properties?.lang === 'string' && node.properties.lang.length > 0) return;
       delete node.properties.dir;
     });
@@ -228,7 +228,7 @@ export async function htmlToMarkdown(
     .use(rehypeParse)
     .use(rehypeRemoveComments)
     .use(rehypeSanitize, sanitizeSchema)
-    .use(rehypeDropRedundantLtrDir)
+    .use(rehypeDropDirWithoutLang)
     .use(rehypeRemark, {
       handlers: createRehypeRemarkHandlers(resolvedSettings),
     } as any)
