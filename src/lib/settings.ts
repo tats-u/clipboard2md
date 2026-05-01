@@ -18,15 +18,19 @@ export const defaultSettings: Settings = {
 
 export const preservedSafeHtmlTags = [
   'b',
+  'cite',
   'dd',
   'dfn',
   'dl',
   'dt',
   'i',
+  'ins',
+  'q',
   'rp',
   'rt',
   'ruby',
   's',
+  'u',
 ] as const;
 
 // Extend GitHub's default sanitization schema with additional safe attributes.
