@@ -254,4 +254,74 @@ describe('htmlToMarkdown', () => {
       expect(md).toContain('standard convention');
     });
   });
+
+  describe('safe HTML preservation', () => {
+    it('preserves safe attributes and unwraps stripped span/div wrappers', async () => {
+      const html = [
+        '<div dir="auto" lang="en">Hello <span lang="ja">こんにちは</span></div>',
+        '<div><span lang="zh">你好</span> <span lang="ko">안녕하세요</span></div>',
+        '<div class="outer"><span class="inner">plain</span></div>',
+        '<div dir="ltr">left to right only</div>',
+        '<div dir="rtl">right to left only</div>',
+      ].join('');
+
+      const md = await htmlToMarkdown(html, { allowRawHtml: true });
+
+      expect(md).toContain('<div dir="auto" lang="en">Hello <span lang="ja">こんにちは</span></div>');
+      expect(md).toContain('<span lang="zh">你好</span>');
+      expect(md).toContain('<span lang="ko">안녕하세요</span>');
+      expect(md).toContain('plain');
+      expect(md).toContain('left to right only');
+      expect(md).toContain('right to left only');
+      expect(md).not.toContain('<div>你好');
+      expect(md).not.toContain('<div>plain</div>');
+      expect(md).not.toContain('<span>plain</span>');
+      expect(md).not.toContain('<div dir="ltr">left to right only</div>');
+      expect(md).not.toContain('<div dir="rtl">right to left only</div>');
+    });
+
+    it('drops dir without lang but keeps meaningful direction metadata', async () => {
+      const html = [
+        '<p dir="ltr">Plain paragraph</p>',
+        '<p dir="rtl">Arabic paragraph</p>',
+        '<p dir="ltr" lang="en">English paragraph</p>',
+        '<p dir="rtl" lang="ar">مرحبا</p>',
+      ].join('');
+
+      const md = await htmlToMarkdown(html, { allowRawHtml: true });
+
+      expect(md).toContain('Plain paragraph');
+      expect(md).toContain('Arabic paragraph');
+      expect(md).not.toContain('<p dir="ltr">Plain paragraph</p>');
+      expect(md).not.toContain('<p dir="rtl">Arabic paragraph</p>');
+      expect(md).toContain('<p dir="ltr" lang="en">English paragraph</p>');
+      expect(md).toContain('<p dir="rtl" lang="ar">مرحبا</p>');
+    });
+
+    it('preserves ruby tags when safe HTML is allowed', async () => {
+      const html =
+        '<p><ruby>不運<rt>ハードラック</rt></ruby>と<ruby>踊<rt>ダンス</rt></ruby>っちまったんだよ……</p>';
+
+      const md = await htmlToMarkdown(html, { allowRawHtml: true });
+
+      expect(md).toContain('<ruby>不運<rt>ハードラック</rt></ruby>');
+      expect(md).toContain('<ruby>踊<rt>ダンス</rt></ruby>');
+    });
+
+    it('preserves additional allowed safe HTML tags', async () => {
+      const html = [
+        '<dl><dt>用語</dt><dd><dfn>定義</dfn></dd></dl>',
+        '<p><i>italic</i> <b>bold</b> <s>strike</s></p>',
+        '<p><q cite="https://example.com/quote">quote</q> <cite>source</cite></p>',
+        '<p><u>underline</u> <ins>inserted</ins></p>',
+      ].join('');
+
+      const md = await htmlToMarkdown(html, { allowRawHtml: true });
+
+      expect(md).toContain('<dl><dt>用語</dt><dd><dfn>定義</dfn></dd></dl>');
+      expect(md).toContain('<i>italic</i> <b>bold</b> <s>strike</s>');
+      expect(md).toContain('<q cite="https://example.com/quote">quote</q> <cite>source</cite>');
+      expect(md).toContain('<u>underline</u> <ins>inserted</ins>');
+    });
+  });
 });
