@@ -146,7 +146,7 @@ const MARKDOWN_COMPATIBLE_ATTRIBUTE_NAMES = new Map<string, Set<string>>([
   ['th', new Set(['align'])],
 ]);
 
-function hasNonEmptyPropertyValues(node: any): boolean {
+function hasTruthyPropertyValues(node: any): boolean {
   return Object.values(node.properties ?? {}).some((value) => {
     if (value === null || value === undefined) return false;
     if (Array.isArray(value)) return value.length > 0;
@@ -176,9 +176,9 @@ function createRawHtmlNode(state: any, node: any) {
 function shouldPreserveRawHtml(node: any, allowRawHtml: boolean): boolean {
   if (!allowRawHtml) return false;
   if (preservedTagsSet.has(node.tagName)) return true;
-  const hasNonMarkdownCompatibleAttributes = !hasOnlyMarkdownCompatibleAttributes(node);
-  if (!hasNonMarkdownCompatibleAttributes) return false;
-  return hasNonEmptyPropertyValues(node);
+  const hasIncompatibleAttributes = !hasOnlyMarkdownCompatibleAttributes(node);
+  if (!hasIncompatibleAttributes) return false;
+  return hasTruthyPropertyValues(node);
 }
 
 function createRehypeRemarkHandlers(settings: Settings) {
