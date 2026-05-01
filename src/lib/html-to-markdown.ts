@@ -137,7 +137,7 @@ function createBreakHandler(brStyle: Settings['brStyle']) {
 }
 
 const preservedTagsSet = new Set<string>(preservedSafeHtmlTags);
-const MARKDOWN_COMPATIBLE_ATTRIBUTE_NAMES = new Map<string, Set<string>>([
+const markdownCompatibleAttributeNames = new Map<string, Set<string>>([
   ['a', new Set(['href', 'title'])],
   ['img', new Set(['alt', 'src', 'title'])],
   ['li', new Set(['checked'])],
@@ -159,7 +159,7 @@ function hasOnlyMarkdownCompatibleAttributes(node: any): boolean {
   const propertyNames = Object.keys(node.properties ?? {});
   if (propertyNames.length === 0) return true;
 
-  const allowedAttributes = MARKDOWN_COMPATIBLE_ATTRIBUTE_NAMES.get(node.tagName);
+  const allowedAttributes = markdownCompatibleAttributeNames.get(node.tagName);
   if (!allowedAttributes) return false;
   return propertyNames.every((propertyName) => allowedAttributes.has(propertyName));
 }
@@ -185,10 +185,7 @@ function createRehypeRemarkHandlers(settings: Settings) {
     ...hastToMdastHandlers,
     table: createTableHandler(),
   } as Record<string, any>;
-  const tagNames = new Set(Object.keys(handlers));
-  for (const tagName of preservedTagsSet) {
-    tagNames.add(tagName);
-  }
+  const tagNames = new Set([...Object.keys(handlers), ...preservedTagsSet]);
 
   return Object.fromEntries(
     Array.from(tagNames).map((tagName) => [
