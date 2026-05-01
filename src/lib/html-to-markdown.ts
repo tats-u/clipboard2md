@@ -22,6 +22,16 @@ function rehypeRemoveComments() {
   };
 }
 
+function rehypeDropRedundantLtrDir() {
+  return (tree: any) => {
+    visit(tree, 'element', (node: any) => {
+      if (node.properties?.dir !== 'ltr') return;
+      if (typeof node.properties?.lang === 'string' && node.properties.lang.length > 0) return;
+      delete node.properties.dir;
+    });
+  };
+}
+
 function remarkStripEmptyLinks() {
   return (tree: any) => {
     visit(tree, 'link', (node: any, index: number | undefined, parent: any) => {
@@ -218,6 +228,7 @@ export async function htmlToMarkdown(
     .use(rehypeParse)
     .use(rehypeRemoveComments)
     .use(rehypeSanitize, sanitizeSchema)
+    .use(rehypeDropRedundantLtrDir)
     .use(rehypeRemark, {
       handlers: createRehypeRemarkHandlers(resolvedSettings),
     } as any)

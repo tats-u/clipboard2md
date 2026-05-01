@@ -261,6 +261,7 @@ describe('htmlToMarkdown', () => {
         '<div dir="auto">Hello <span lang="ja">こんにちは</span></div>',
         '<div><span lang="zh">你好</span> <span lang="ko">안녕하세요</span></div>',
         '<div class="outer"><span class="inner">plain</span></div>',
+        '<div dir="ltr">left to right only</div>',
       ].join('');
 
       const md = await htmlToMarkdown(html, { allowRawHtml: true });
@@ -269,9 +270,26 @@ describe('htmlToMarkdown', () => {
       expect(md).toContain('<span lang="zh">你好</span>');
       expect(md).toContain('<span lang="ko">안녕하세요</span>');
       expect(md).toContain('plain');
+      expect(md).toContain('left to right only');
       expect(md).not.toContain('<div>你好');
       expect(md).not.toContain('<div>plain</div>');
       expect(md).not.toContain('<span>plain</span>');
+      expect(md).not.toContain('<div dir="ltr">left to right only</div>');
+    });
+
+    it('drops standalone ltr direction but keeps meaningful direction metadata', async () => {
+      const html = [
+        '<p dir="ltr">Plain paragraph</p>',
+        '<p dir="ltr" lang="en">English paragraph</p>',
+        '<p dir="rtl">مرحبا</p>',
+      ].join('');
+
+      const md = await htmlToMarkdown(html, { allowRawHtml: true });
+
+      expect(md).toContain('Plain paragraph');
+      expect(md).not.toContain('<p dir="ltr">Plain paragraph</p>');
+      expect(md).toContain('<p dir="ltr" lang="en">English paragraph</p>');
+      expect(md).toContain('<p dir="rtl">مرحبا</p>');
     });
 
     it('preserves ruby tags when safe HTML is allowed', async () => {
