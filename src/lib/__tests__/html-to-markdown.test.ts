@@ -258,7 +258,7 @@ describe('htmlToMarkdown', () => {
   describe('safe HTML preservation', () => {
     it('preserves safe attributes and unwraps stripped span/div wrappers', async () => {
       const html = [
-        '<div dir="auto">Hello <span lang="ja">こんにちは</span></div>',
+        '<div dir="auto" lang="en">Hello <span lang="ja">こんにちは</span></div>',
         '<div><span lang="zh">你好</span> <span lang="ko">안녕하세요</span></div>',
         '<div class="outer"><span class="inner">plain</span></div>',
         '<div dir="ltr">left to right only</div>',
@@ -267,7 +267,7 @@ describe('htmlToMarkdown', () => {
 
       const md = await htmlToMarkdown(html, { allowRawHtml: true });
 
-      expect(md).toContain('<div dir="auto">Hello <span lang="ja">こんにちは</span></div>');
+      expect(md).toContain('<div dir="auto" lang="en">Hello <span lang="ja">こんにちは</span></div>');
       expect(md).toContain('<span lang="zh">你好</span>');
       expect(md).toContain('<span lang="ko">안녕하세요</span>');
       expect(md).toContain('plain');
