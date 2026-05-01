@@ -25,8 +25,8 @@ function rehypeRemoveComments() {
 function rehypeDropDirWithoutLang() {
   return (tree: any) => {
     visit(tree, 'element', (node: any) => {
-      if (typeof node.properties?.dir !== 'string' || node.properties.dir.length === 0) return;
-      if (typeof node.properties?.lang === 'string' && node.properties.lang.length > 0) return;
+      if (!node.properties?.dir) return;
+      if (node.properties?.lang) return;
       delete node.properties.dir;
     });
   };
