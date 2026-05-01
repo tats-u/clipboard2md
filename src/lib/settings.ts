@@ -33,9 +33,11 @@ export const preservedSafeHtmlTags = [
   'u',
 ] as const;
 
-// Extend GitHub's default sanitization schema with additional safe attributes.
-// The default already allows: dl, dt, dd, ruby, rt, rp, details, summary,
-// abbr, mark, figure, figcaption, ins, del, sub, sup, kbd, var, samp, tables, etc.
+// Extend GitHub's default sanitization schema with additional safe attributes
+// and explicitly preserved safe tags that we want to survive sanitization.
+// The default schema already allows many structural/semantic tags such as
+// details, summary, abbr, mark, figure, figcaption, ins, del, sub, sup,
+// kbd, var, samp, and tables.
 // id/name are auto-prefixed with "user-content-" (default clobber behavior).
 // class, style, on* handlers are NOT in any allow list so they are stripped.
 export const sanitizeSchema = {
