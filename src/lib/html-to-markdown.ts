@@ -32,6 +32,47 @@ function rehypeDropDirWithoutLang() {
   };
 }
 
+function rehypeDropEmptyProperties() {
+  return (tree: any) => {
+    visit(tree, 'element', (node: any) => {
+      if (!node.properties) return;
+
+      for (const [key, value] of Object.entries(node.properties)) {
+        if (value === null || value === undefined) {
+          delete node.properties[key];
+          continue;
+        }
+
+        if (typeof value === 'boolean') {
+          if (!value) {
+            delete node.properties[key];
+          }
+          continue;
+        }
+
+        if (typeof value === 'string' && value.length === 0) {
+          delete node.properties[key];
+          continue;
+        }
+
+        if (Array.isArray(value)) {
+          const filtered = value.filter(
+            (entry) =>
+              entry !== null &&
+              entry !== undefined &&
+              (typeof entry === 'string' ? entry.length > 0 : true),
+          );
+          if (filtered.length === 0) {
+            delete node.properties[key];
+            continue;
+          }
+          node.properties[key] = filtered;
+        }
+      }
+    });
+  };
+}
+
 function remarkStripEmptyLinks() {
   return (tree: any) => {
     visit(tree, 'link', (node: any, index: number | undefined, parent: any) => {
@@ -73,9 +114,10 @@ function getBareAutolinkLiteral(
   linkTitleStyle: Settings['linkTitleStyle'],
 ): string | null {
   if (getEffectiveLinkTitle(node, linkTitleStyle)) return null;
-  if (node.children.length !== 1 || node.children[0].type !== 'text') return null;
+  if (node.children.length === 0) return null;
+  if (node.children.some((child: any) => child.type !== 'text')) return null;
 
-  const text = node.children[0].value as string;
+  const text = node.children.map((child: any) => child.value).join('') as string;
   const url = node.url as string;
   const urlWithoutProtocol = url.replace(/^https?:\/\//, '');
 
@@ -229,6 +271,7 @@ export async function htmlToMarkdown(
     .use(rehypeRemoveComments)
     .use(rehypeSanitize, sanitizeSchema)
     .use(rehypeDropDirWithoutLang)
+    .use(rehypeDropEmptyProperties)
     .use(rehypeRemark, {
       handlers: createRehypeRemarkHandlers(resolvedSettings),
     } as any)

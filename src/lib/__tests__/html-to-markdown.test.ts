@@ -105,6 +105,32 @@ describe('htmlToMarkdown', () => {
       expect(md.trim()).toBe('http://example.com/');
     });
 
+    it('unwraps stripped span wrappers inside links while preserving the original href', async () => {
+      const html = `
+        <span class="outer"></span>
+        <a
+          dir="ltr"
+          href="https://t.co/f5nEuuFyJc"
+          rel="noopener noreferrer nofollow"
+          role="link"
+          class="link-wrapper"
+          style="color: rgb(29, 155, 240);"
+        ><span
+            aria-hidden="true"
+            class="protocol"
+          >https://</span>code.videolan.org/videolan/dav1d</a
+        >
+      `;
+
+      const md = await htmlToMarkdown(html);
+
+      expect(md.trim()).toBe(
+        '[https://code.videolan.org/videolan/dav1d](https://t.co/f5nEuuFyJc)',
+      );
+      expect(md).not.toContain('class=""');
+      expect(md).not.toContain('<span>');
+    });
+
     it('removes all link titles when configured', async () => {
       const html = '<a href="https://example.com" title="Example">click here</a>';
       const md = await htmlToMarkdown(html, { linkTitleStyle: 'remove-all' });
