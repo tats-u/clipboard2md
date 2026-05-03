@@ -38,8 +38,15 @@ function rehypeDropEmptyProperties() {
       if (!node.properties) return;
 
       for (const [key, value] of Object.entries(node.properties)) {
-        if (value === null || value === undefined || value === false) {
+        if (value === null || value === undefined) {
           delete node.properties[key];
+          continue;
+        }
+
+        if (typeof value === 'boolean') {
+          if (!value) {
+            delete node.properties[key];
+          }
           continue;
         }
 
