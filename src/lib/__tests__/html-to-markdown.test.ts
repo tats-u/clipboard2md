@@ -105,7 +105,7 @@ describe('htmlToMarkdown', () => {
       expect(md.trim()).toBe('http://example.com/');
     });
 
-    it('unwraps stripped span wrappers inside links and keeps displayed URLs for t.co shortlinks', async () => {
+    it('unwraps stripped span wrappers inside links while preserving the original href', async () => {
       const html = `
         <span class="css-1jxf684 r-bcqeeo r-1ttztb7 r-qvutc0 r-1tl8opc"></span>
         <a
@@ -124,10 +124,11 @@ describe('htmlToMarkdown', () => {
 
       const md = await htmlToMarkdown(html);
 
-      expect(md.trim()).toBe('https://code.videolan.org/videolan/dav1d');
+      expect(md.trim()).toBe(
+        '[https://code.videolan.org/videolan/dav1d](https://t.co/f5nEuuFyJc)',
+      );
       expect(md).not.toContain('class=""');
       expect(md).not.toContain('<span>');
-      expect(md).not.toContain('t.co');
     });
 
     it('removes all link titles when configured', async () => {
