@@ -105,6 +105,31 @@ describe('htmlToMarkdown', () => {
       expect(md.trim()).toBe('http://example.com/');
     });
 
+    it('unwraps stripped span wrappers inside links and keeps displayed URLs for t.co shortlinks', async () => {
+      const html = `
+        <span class="css-1jxf684 r-bcqeeo r-1ttztb7 r-qvutc0 r-1tl8opc"></span>
+        <a
+          dir="ltr"
+          href="https://t.co/f5nEuuFyJc"
+          rel="noopener noreferrer nofollow"
+          role="link"
+          class="css-1jxf684 r-bcqeeo r-1ttztb7 r-qvutc0 r-poiln3 r-1wvb978 r-1loqt21"
+          style="color: rgb(29, 155, 240);"
+        ><span
+            aria-hidden="true"
+            class="css-1jxf684 r-bcqeeo r-1ttztb7 r-qvutc0 r-1tl8opc r-qlhcfr r-19qo34d r-qvk6io r-orgf3d r-u8s1d"
+          >https://</span>code.videolan.org/videolan/dav1d</a
+        >
+      `;
+
+      const md = await htmlToMarkdown(html);
+
+      expect(md.trim()).toBe('https://code.videolan.org/videolan/dav1d');
+      expect(md).not.toContain('class=""');
+      expect(md).not.toContain('<span>');
+      expect(md).not.toContain('t.co');
+    });
+
     it('removes all link titles when configured', async () => {
       const html = '<a href="https://example.com" title="Example">click here</a>';
       const md = await htmlToMarkdown(html, { linkTitleStyle: 'remove-all' });
