@@ -50,7 +50,10 @@ function rehypeDropEmptyProperties() {
 
         if (Array.isArray(value)) {
           const filtered = value.filter(
-            (entry) => entry !== null && entry !== undefined && String(entry).length > 0,
+            (entry) =>
+              entry !== null &&
+              entry !== undefined &&
+              (typeof entry === 'string' ? entry.length > 0 : true),
           );
           if (filtered.length === 0) {
             delete node.properties[key];
