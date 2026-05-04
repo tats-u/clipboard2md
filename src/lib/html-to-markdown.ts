@@ -6,7 +6,7 @@ import { defaultHandlers as hastToMdastHandlers } from 'hast-util-to-mdast';
 import { defaultHandlers as mdastToMarkdownHandlers } from 'mdast-util-to-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkStringify from 'remark-stringify';
-import { visit } from 'unist-util-visit';
+import { SKIP, visit } from 'unist-util-visit';
 import { toHtml } from 'hast-util-to-html';
 import { preservedSafeHtmlTags, sanitizeSchema, type Settings } from './settings';
 
@@ -69,6 +69,31 @@ function rehypeDropEmptyProperties() {
           node.properties[key] = filtered;
         }
       }
+    });
+  };
+}
+
+function rehypeDropIdAndClass() {
+  return (tree: any) => {
+    visit(tree, 'element', (node: any) => {
+      if (!node.properties) return;
+      delete node.properties.id;
+      delete node.properties.className;
+    });
+  };
+}
+
+const transparentWrapperTags = new Set(['article', 'div', 'section', 'span']);
+
+function rehypeUnwrapTransparentWrappers() {
+  return (tree: any) => {
+    visit(tree, 'element', (node: any, index: number | undefined, parent: any) => {
+      if (index === undefined || !parent?.children) return;
+      if (!transparentWrapperTags.has(node.tagName)) return;
+      if (Object.keys(node.properties ?? {}).length > 0) return;
+
+      parent.children.splice(index, 1, ...(node.children ?? []));
+      return [SKIP, index];
     });
   };
 }
@@ -270,8 +295,10 @@ export async function htmlToMarkdown(
     .use(rehypeParse)
     .use(rehypeRemoveComments)
     .use(rehypeSanitize, sanitizeSchema)
+    .use(rehypeDropIdAndClass)
     .use(rehypeDropDirWithoutLang)
     .use(rehypeDropEmptyProperties)
+    .use(rehypeUnwrapTransparentWrappers)
     .use(rehypeRemark, {
       handlers: createRehypeRemarkHandlers(resolvedSettings),
     } as any)
