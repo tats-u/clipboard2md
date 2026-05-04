@@ -349,5 +349,28 @@ describe('htmlToMarkdown', () => {
       expect(md).toContain('<q cite="https://example.com/quote">quote</q> <cite>source</cite>');
       expect(md).toContain('<u>underline</u> <ins>inserted</ins>');
     });
+
+    it('strips id and class everywhere while unwrapping empty structural wrappers', async () => {
+      const html = [
+        '<section id="base64_functions">',
+        '<article class="doc-entry">',
+        '<div class="markdown">',
+        '<p id="summary">Utilities for <span id="label" lang="ja" class="inline">base64</span> encoding and decoding.</p>',
+        '</div>',
+        '</article>',
+        '</section>',
+      ].join('');
+
+      const md = await htmlToMarkdown(html, { allowRawHtml: true });
+
+      expect(md).toContain('Utilities for');
+      expect(md).toContain('<span lang="ja">base64</span>');
+      expect(md).not.toContain('id=');
+      expect(md).not.toContain('class=');
+      expect(md).not.toContain('user-content-');
+      expect(md).not.toContain('<section');
+      expect(md).not.toContain('<article');
+      expect(md).not.toContain('<div');
+    });
   });
 });

@@ -73,6 +73,31 @@ function rehypeDropEmptyProperties() {
   };
 }
 
+function rehypeDropIdAndClass() {
+  return (tree: any) => {
+    visit(tree, 'element', (node: any) => {
+      if (!node.properties) return;
+      delete node.properties.id;
+      delete node.properties.className;
+    });
+  };
+}
+
+const transparentWrapperTags = new Set(['article', 'div', 'section', 'span']);
+
+function rehypeUnwrapTransparentWrappers() {
+  return (tree: any) => {
+    visit(tree, 'element', (node: any, index: number | undefined, parent: any) => {
+      if (index === undefined || !parent?.children) return;
+      if (!transparentWrapperTags.has(node.tagName)) return;
+      if (Object.keys(node.properties ?? {}).length > 0) return;
+
+      parent.children.splice(index, 1, ...(node.children ?? []));
+      return index;
+    });
+  };
+}
+
 function remarkStripEmptyLinks() {
   return (tree: any) => {
     visit(tree, 'link', (node: any, index: number | undefined, parent: any) => {
@@ -270,8 +295,10 @@ export async function htmlToMarkdown(
     .use(rehypeParse)
     .use(rehypeRemoveComments)
     .use(rehypeSanitize, sanitizeSchema)
+    .use(rehypeDropIdAndClass)
     .use(rehypeDropDirWithoutLang)
     .use(rehypeDropEmptyProperties)
+    .use(rehypeUnwrapTransparentWrappers)
     .use(rehypeRemark, {
       handlers: createRehypeRemarkHandlers(resolvedSettings),
     } as any)
