@@ -6,7 +6,7 @@ import { defaultHandlers as hastToMdastHandlers } from 'hast-util-to-mdast';
 import { defaultHandlers as mdastToMarkdownHandlers } from 'mdast-util-to-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkStringify from 'remark-stringify';
-import { visit } from 'unist-util-visit';
+import { SKIP, visit } from 'unist-util-visit';
 import { toHtml } from 'hast-util-to-html';
 import { preservedSafeHtmlTags, sanitizeSchema, type Settings } from './settings';
 
@@ -93,7 +93,7 @@ function rehypeUnwrapTransparentWrappers() {
       if (Object.keys(node.properties ?? {}).length > 0) return;
 
       parent.children.splice(index, 1, ...(node.children ?? []));
-      return index;
+      return [SKIP, index];
     });
   };
 }
