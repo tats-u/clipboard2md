@@ -365,6 +365,8 @@ describe('htmlToMarkdown', () => {
 
       expect(md).toContain('Utilities for');
       expect(md).toContain('<span lang="ja">base64</span>');
+      expect(md).not.toContain('<span id=');
+      expect(md).not.toContain('<span class=');
       expect(md).not.toContain('id=');
       expect(md).not.toContain('class=');
       expect(md).not.toContain('user-content-');
