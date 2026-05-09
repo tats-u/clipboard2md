@@ -279,6 +279,52 @@ describe('htmlToMarkdown', () => {
       expect(md).toContain('informative table');
       expect(md).toContain('standard convention');
     });
+
+    it('drops meaningless copied colspan attributes so simple tables stay in GFM', async () => {
+      const html = `
+        <table>
+          <tr>
+            <th colspan="undefined">漢字</th>
+            <th colspan="undefined">注音（ボポモフォ）</th>
+            <th colspan="undefined">倉頡（Cangjie）</th>
+          </tr>
+          <tr>
+            <td colspan="undefined"><strong>中</strong></td>
+            <td colspan="undefined"><code>5</code> <code>j</code> <code>/</code> <code>(Space)</code></td>
+            <td colspan="undefined"><code>L</code> <code>(Space)</code></td>
+          </tr>
+        </table>`;
+
+      const md = await htmlToMarkdown(html);
+
+      expect(md).toContain('| 漢字 | 注音（ボポモフォ） | 倉頡（Cangjie） |');
+      expect(md).toContain('| **中** | `5` `j` `/` `(Space)` | `L` `(Space)` |');
+      expect(md).not.toContain('<th');
+      expect(md).not.toContain('<td');
+      expect(md).not.toContain('<strong>');
+      expect(md).not.toContain('<code>');
+      expect(md).not.toContain('colspan');
+      expect(md).not.toContain('undefined');
+    });
+
+    it('falls back to raw HTML when table spans are meaningful', async () => {
+      const html = `
+        <table>
+          <tr>
+            <th colspan="2">見出し</th>
+          </tr>
+          <tr>
+            <td>A</td>
+            <td>B</td>
+          </tr>
+        </table>`;
+
+      const md = await htmlToMarkdown(html, { allowRawHtml: true });
+
+      expect(md).toContain('<table>');
+      expect(md).toContain('<th colspan="2">見出し</th>');
+      expect(md).not.toContain('| 見出し |');
+    });
   });
 
   describe('safe HTML preservation', () => {
