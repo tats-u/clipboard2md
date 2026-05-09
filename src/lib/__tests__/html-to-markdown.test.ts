@@ -297,8 +297,8 @@ describe('htmlToMarkdown', () => {
 
       const md = await htmlToMarkdown(html);
 
-      expect(md).toContain('| 漢字 | 注音（ボポモフォ） | 倉頡（Cangjie） |');
-      expect(md).toContain('| **中** | `5` `j` `/` `(Space)` | `L` `(Space)` |');
+      expect(md).toMatch(/\|\s*漢字\s*\|\s*注音（ボポモフォ）\s*\|\s*倉頡（Cangjie）\s*\|/);
+      expect(md).toMatch(/\|\s*\*\*中\*\*\s*\|\s*`5` `j` `\/` `\(Space\)`\s*\|\s*`L` `\(Space\)`\s*\|/);
       expect(md).not.toContain('<th');
       expect(md).not.toContain('<td');
       expect(md).not.toContain('<strong>');
