@@ -73,6 +73,42 @@ function rehypeDropEmptyProperties() {
   };
 }
 
+const tableCellSpanPropertyNames = ['colSpan', 'rowSpan'] as const;
+
+function normalizeTableCellSpan(value: unknown): number | null {
+  const normalized =
+    typeof value === 'number'
+      ? value
+      : typeof value === 'string' && /^\d+$/.test(value)
+        ? Number.parseInt(value, 10)
+        : Number.NaN;
+
+  if (!Number.isInteger(normalized) || normalized <= 1) {
+    return null;
+  }
+
+  return normalized;
+}
+
+function rehypeNormalizeTableCellSpans() {
+  return (tree: any) => {
+    visit(tree, 'element', (node: any) => {
+      if (node.tagName !== 'td' && node.tagName !== 'th') return;
+      if (!node.properties) return;
+
+      for (const propertyName of tableCellSpanPropertyNames) {
+        const normalizedSpan = normalizeTableCellSpan(node.properties[propertyName]);
+        if (normalizedSpan === null) {
+          delete node.properties[propertyName];
+          continue;
+        }
+
+        node.properties[propertyName] = normalizedSpan;
+      }
+    });
+  };
+}
+
 function rehypeDropIdAndClass() {
   return (tree: any) => {
     visit(tree, 'element', (node: any) => {
@@ -187,8 +223,26 @@ function createLinkHandler(linkTitleStyle: Settings['linkTitleStyle']) {
  * Custom table handler: tries default GFM table conversion,
  * falls back to raw HTML for tables that can't be represented in GFM.
  */
-function createTableHandler() {
+function tableContainsNodesThatNeedRawHtml(node: any, allowRawHtml: boolean): boolean {
+  let shouldFallback = false;
+
+  visit(node, 'element', (child: any) => {
+    if (child === node) return;
+    if (shouldPreserveRawHtml(child, allowRawHtml)) {
+      shouldFallback = true;
+      return SKIP;
+    }
+  });
+
+  return shouldFallback;
+}
+
+function createTableHandler(allowRawHtml: boolean) {
   return (state: any, node: any) => {
+    if (tableContainsNodesThatNeedRawHtml(node, allowRawHtml)) {
+      return createRawHtmlNode(state, node);
+    }
+
     try {
       return hastToMdastHandlers.table(state, node);
     } catch {
@@ -260,7 +314,7 @@ function shouldPreserveRawHtml(node: any, allowRawHtml: boolean): boolean {
 function createRehypeRemarkHandlers(settings: Settings) {
   const handlers = {
     ...hastToMdastHandlers,
-    table: createTableHandler(),
+    table: createTableHandler(settings.allowRawHtml),
   } as Record<string, any>;
   const tagNames = new Set([...Object.keys(handlers), ...preservedTagsSet]);
 
@@ -298,6 +352,7 @@ export async function htmlToMarkdown(
     .use(rehypeDropIdAndClass)
     .use(rehypeDropDirWithoutLang)
     .use(rehypeDropEmptyProperties)
+    .use(rehypeNormalizeTableCellSpans)
     .use(rehypeUnwrapTransparentWrappers)
     .use(rehypeRemark, {
       handlers: createRehypeRemarkHandlers(resolvedSettings),
