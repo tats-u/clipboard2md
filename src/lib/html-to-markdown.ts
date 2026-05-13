@@ -115,6 +115,48 @@ function rehypeDropIdAndClass() {
       if (!node.properties) return;
       delete node.properties.id;
       delete node.properties.className;
+      delete node.properties.tabstop;
+    });
+  };
+}
+
+const headingTagNames = new Set(['h1', 'h2', 'h3', 'h4', 'h5', 'h6']);
+const decorativeAnchorTextRe = /^[#¶§]+$/u;
+
+function collectText(node: any): string {
+  if (node.type === 'text') return node.value as string;
+  if (!node.children) return '';
+  return (node.children as any[]).map(collectText).join('');
+}
+
+function isTabstopMinusOne(node: any): boolean {
+  return node.type === 'element' && node.tagName === 'a' && node.properties?.tabstop === '-1';
+}
+
+function stripTabstopAnchors(node: any): void {
+  if (!node.children) return;
+  node.children = (node.children as any[]).filter((child: any) => !isTabstopMinusOne(child));
+  (node.children as any[]).forEach(stripTabstopAnchors);
+}
+
+function rehypeDropTabstopAnchors() {
+  return (tree: any) => {
+    // Remove <a tabstop="-1"> inside headings (any depth)
+    visit(tree, 'element', (node: any) => {
+      if (!headingTagNames.has(node.tagName)) return;
+      stripTabstopAnchors(node);
+      return SKIP;
+    });
+
+    // Extra condition: also remove <a tabstop="-1"> anywhere whose entire
+    // text content consists only of decorative symbols (#, ¶, §).
+    // These are permalink/anchor icons that add no value in Markdown output.
+    visit(tree, 'element', (node: any, index: number | undefined, parent: any) => {
+      if (!isTabstopMinusOne(node)) return;
+      if (index === undefined || !parent?.children) return;
+      if (!decorativeAnchorTextRe.test(collectText(node))) return;
+      (parent.children as any[]).splice(index, 1);
+      return [SKIP, index];
     });
   };
 }
@@ -348,6 +390,7 @@ export async function htmlToMarkdown(
   const result = await unified()
     .use(rehypeParse)
     .use(rehypeRemoveComments)
+    .use(rehypeDropTabstopAnchors)
     .use(rehypeSanitize, sanitizeSchema)
     .use(rehypeDropIdAndClass)
     .use(rehypeDropDirWithoutLang)

@@ -395,7 +395,54 @@ describe('htmlToMarkdown', () => {
       expect(md).toContain('<q cite="https://example.com/quote">quote</q> <cite>source</cite>');
       expect(md).toContain('<u>underline</u> <ins>inserted</ins>');
     });
+  });
 
+  describe('tabstop anchor removal', () => {
+    it('removes <a tabstop="-1"> from inside headings', async () => {
+      const html = '<h2 id="heading">Heading<a tabstop="-1" href="#heading">#</a></h2>';
+      const md = await htmlToMarkdown(html);
+      expect(md.trim()).toBe('## Heading');
+    });
+
+    it('removes <a tabstop="-1"> from all heading levels', async () => {
+      const levels = [1, 2, 3, 4, 5, 6] as const;
+      for (const level of levels) {
+        const html = `<h${level} id="s">Title<a tabstop="-1" href="#s">¶</a></h${level}>`;
+        const md = await htmlToMarkdown(html);
+        expect(md.trim()).toBe(`${'#'.repeat(level)} Title`);
+      }
+    });
+
+    it('removes <a tabstop="-1"> that is a nested descendant of a heading', async () => {
+      const html = '<h2 id="h">Text <span><a tabstop="-1" href="#h">#</a></span></h2>';
+      const md = await htmlToMarkdown(html);
+      expect(md.trim()).toBe('## Text');
+    });
+
+    it('removes <a tabstop="-1"> with decorative-only content outside headings', async () => {
+      const html = '<p>Section <a tabstop="-1" href="#section">¶</a></p>';
+      const md = await htmlToMarkdown(html);
+      expect(md).not.toContain('¶');
+      expect(md).not.toContain('#section');
+      expect(md).toContain('Section');
+    });
+
+    it('keeps <a tabstop="-1"> with meaningful link text outside headings', async () => {
+      const html = '<p>See <a tabstop="-1" href="#details">more details</a></p>';
+      const md = await htmlToMarkdown(html);
+      expect(md).toContain('[more details](#details)');
+    });
+
+    it('strips tabstop attribute from all elements', async () => {
+      const html = '<p tabstop="0">Text <span tabstop="-1">word</span></p>';
+      const md = await htmlToMarkdown(html, { allowRawHtml: true });
+      expect(md).not.toContain('tabstop');
+      expect(md).toContain('Text');
+      expect(md).toContain('word');
+    });
+  });
+
+  describe('id/class stripping', () => {
     it('strips id and class everywhere while unwrapping empty structural wrappers', async () => {
       const html = [
         '<section id="base64_functions">',
