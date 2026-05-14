@@ -180,15 +180,56 @@ function rehypeUnwrapTransparentWrappers() {
   };
 }
 
-function remarkStripEmptyLinks() {
+const emptyPhrasingContainerTypes = new Set(['delete', 'emphasis', 'link', 'strong']);
+
+function markdownNodeHasMeaningfulContent(node: any): boolean {
+  const stack = [node];
+
+  while (stack.length > 0) {
+    const current = stack.pop();
+    if (!current) continue;
+
+    switch (current.type) {
+      case 'text':
+        if (/\S/.test(current.value ?? '')) return true;
+        break;
+      case 'inlineCode':
+      case 'html':
+        if (typeof current.value === 'string' && current.value.length > 0) return true;
+        break;
+      case 'break':
+      case 'image':
+      case 'imageReference':
+      case 'linkReference':
+        return true;
+      default:
+        if (Array.isArray(current.children)) {
+          stack.push(...current.children);
+        }
+        break;
+    }
+  }
+
+  return false;
+}
+
+function remarkUnwrapEmptyPhrasingContainers() {
   return (tree: any) => {
-    visit(tree, 'link', (node: any, index: number | undefined, parent: any) => {
-      if (index === undefined || !parent) return;
-      if (!node.url) {
-        parent.children.splice(index, 1, ...node.children);
-        return index;
-      }
-    });
+    visit(
+      tree,
+      (node: any) => emptyPhrasingContainerTypes.has(node.type),
+      (node: any, index: number | undefined, parent: any) => {
+        if (index === undefined || !parent) return;
+        if (node.type === 'link' && !node.url) {
+          parent.children.splice(index, 1, ...node.children);
+          return [SKIP, index];
+        }
+        if (!markdownNodeHasMeaningfulContent(node)) {
+          parent.children.splice(index, 1, ...node.children);
+          return [SKIP, index];
+        }
+      },
+    );
   };
 }
 
@@ -404,7 +445,7 @@ export async function htmlToMarkdown(
     .use(rehypeRemark, {
       handlers: createRehypeRemarkHandlers(resolvedSettings),
     } as any)
-    .use(remarkStripEmptyLinks)
+    .use(remarkUnwrapEmptyPhrasingContainers)
     .use(remarkGfm)
     .use(remarkStringify, {
       bullet: resolvedSettings.listMarker,
