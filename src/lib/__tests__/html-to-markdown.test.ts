@@ -152,6 +152,23 @@ describe('htmlToMarkdown', () => {
       expect(md).not.toContain('<>');
       expect(md).toContain('Try It');
     });
+
+    it('drops empty links instead of emitting empty markdown link syntax', async () => {
+      const html =
+        '<h2 id="ai-slop"><a class="header-anchor-link" href="https://example.com/ai-slop" aria-hidden="true"></a>AI slopとは何か</h2>';
+      const md = await htmlToMarkdown(html);
+      expect(md.trim()).toBe('## AI slopとは何か');
+      expect(md).not.toContain('[](');
+    });
+
+    it('unwraps empty phrasing containers that have no meaningful content', async () => {
+      const html = '<p>Hello<strong></strong><em> </em><del></del>world</p>';
+      const md = await htmlToMarkdown(html);
+      expect(md.trim()).toBe('Hello world');
+      expect(md).not.toContain('****');
+      expect(md).not.toContain('__ __');
+      expect(md).not.toContain('~~~~');
+    });
   });
 
   describe('thematic break (hr) style', () => {

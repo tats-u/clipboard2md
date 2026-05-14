@@ -180,13 +180,32 @@ function rehypeUnwrapTransparentWrappers() {
   };
 }
 
-function remarkStripEmptyLinks() {
+const emptyPhrasingContainerTypes = new Set(['delete', 'emphasis', 'link', 'strong']);
+
+function markdownNodeHasMeaningfulContent(node: any): boolean {
+  switch (node.type) {
+    case 'text':
+      return /\S/u.test(node.value ?? '');
+    case 'inlineCode':
+    case 'html':
+      return typeof node.value === 'string' && node.value.length > 0;
+    case 'break':
+    case 'image':
+    case 'imageReference':
+    case 'linkReference':
+      return true;
+    default:
+      return Array.isArray(node.children) && node.children.some(markdownNodeHasMeaningfulContent);
+  }
+}
+
+function remarkUnwrapEmptyPhrasingContainers() {
   return (tree: any) => {
-    visit(tree, 'link', (node: any, index: number | undefined, parent: any) => {
+    visit(tree, (node: any) => emptyPhrasingContainerTypes.has(node.type), (node: any, index: number | undefined, parent: any) => {
       if (index === undefined || !parent) return;
-      if (!node.url) {
+      if (!node.url || !markdownNodeHasMeaningfulContent(node)) {
         parent.children.splice(index, 1, ...node.children);
-        return index;
+        return [SKIP, index];
       }
     });
   };
@@ -404,7 +423,7 @@ export async function htmlToMarkdown(
     .use(rehypeRemark, {
       handlers: createRehypeRemarkHandlers(resolvedSettings),
     } as any)
-    .use(remarkStripEmptyLinks)
+    .use(remarkUnwrapEmptyPhrasingContainers)
     .use(remarkGfm)
     .use(remarkStringify, {
       bullet: resolvedSettings.listMarker,
