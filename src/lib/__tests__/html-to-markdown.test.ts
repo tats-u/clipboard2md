@@ -397,46 +397,46 @@ describe('htmlToMarkdown', () => {
     });
   });
 
-  describe('tabstop anchor removal', () => {
-    it('removes <a tabstop="-1"> from inside headings', async () => {
-      const html = '<h2 id="heading">Heading<a tabstop="-1" href="#heading">#</a></h2>';
+  describe('tabindex anchor removal', () => {
+    it('removes <a tabindex="-1"> from inside headings', async () => {
+      const html = '<h2 id="heading">Heading<a tabindex="-1" href="#heading">#</a></h2>';
       const md = await htmlToMarkdown(html);
       expect(md.trim()).toBe('## Heading');
     });
 
-    it('removes <a tabstop="-1"> from all heading levels', async () => {
+    it('removes <a tabindex="-1"> from all heading levels', async () => {
       const levels = [1, 2, 3, 4, 5, 6] as const;
       for (const level of levels) {
-        const html = `<h${level} id="s">Title<a tabstop="-1" href="#s">¶</a></h${level}>`;
+        const html = `<h${level} id="s">Title<a tabindex="-1" href="#s">¶</a></h${level}>`;
         const md = await htmlToMarkdown(html);
         expect(md.trim()).toBe(`${'#'.repeat(level)} Title`);
       }
     });
 
-    it('removes <a tabstop="-1"> that is a nested descendant of a heading', async () => {
-      const html = '<h2 id="h">Text <span><a tabstop="-1" href="#h">#</a></span></h2>';
+    it('removes <a tabindex="-1"> that is a nested descendant of a heading', async () => {
+      const html = '<h2 id="h">Text <span><a tabindex="-1" href="#h">#</a></span></h2>';
       const md = await htmlToMarkdown(html);
       expect(md.trim()).toBe('## Text');
     });
 
-    it('removes <a tabstop="-1"> with decorative-only content outside headings', async () => {
-      const html = '<p>Section <a tabstop="-1" href="#section">¶</a></p>';
+    it('removes <a tabindex="-1"> with decorative-only content outside headings', async () => {
+      const html = '<p>Section <a tabindex="-1" href="#section">¶</a></p>';
       const md = await htmlToMarkdown(html);
       expect(md).not.toContain('¶');
       expect(md).not.toContain('#section');
       expect(md).toContain('Section');
     });
 
-    it('keeps <a tabstop="-1"> with meaningful link text outside headings', async () => {
-      const html = '<p>See <a tabstop="-1" href="#details">more details</a></p>';
+    it('keeps <a tabindex="-1"> with meaningful link text outside headings', async () => {
+      const html = '<p>See <a tabindex="-1" href="#details">more details</a></p>';
       const md = await htmlToMarkdown(html);
       expect(md).toContain('[more details](#details)');
     });
 
-    it('strips tabstop attribute from all elements', async () => {
-      const html = '<p tabstop="0">Text <span tabstop="-1">word</span></p>';
+    it('strips tabindex attribute from all elements', async () => {
+      const html = '<p tabindex="0">Text <span tabindex="-1">word</span></p>';
       const md = await htmlToMarkdown(html, { allowRawHtml: true });
-      expect(md).not.toContain('tabstop');
+      expect(md).not.toContain('tabindex');
       expect(md).toContain('Text');
       expect(md).toContain('word');
     });
