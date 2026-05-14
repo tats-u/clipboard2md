@@ -201,13 +201,21 @@ function markdownNodeHasMeaningfulContent(node: any): boolean {
 
 function remarkUnwrapEmptyPhrasingContainers() {
   return (tree: any) => {
-    visit(tree, (node: any) => emptyPhrasingContainerTypes.has(node.type), (node: any, index: number | undefined, parent: any) => {
-      if (index === undefined || !parent) return;
-      if (!node.url || !markdownNodeHasMeaningfulContent(node)) {
-        parent.children.splice(index, 1, ...node.children);
-        return [SKIP, index];
-      }
-    });
+    visit(
+      tree,
+      (node: any) => emptyPhrasingContainerTypes.has(node.type),
+      (node: any, index: number | undefined, parent: any) => {
+        if (index === undefined || !parent) return;
+        if (node.type === 'link' && !node.url) {
+          parent.children.splice(index, 1, ...node.children);
+          return [SKIP, index];
+        }
+        if (!markdownNodeHasMeaningfulContent(node)) {
+          parent.children.splice(index, 1, ...node.children);
+          return [SKIP, index];
+        }
+      },
+    );
   };
 }
 
