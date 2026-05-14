@@ -115,9 +115,9 @@ function rehypeDropIdAndClass() {
       if (!node.properties) return;
       delete node.properties.id;
       delete node.properties.className;
-      // `tabstop` is a non-standard attribute (stored lowercase by rehype-parse)
-      // that has no meaning in Markdown output, similar to id/class.
-      delete node.properties.tabstop;
+      // `tabIndex` (from HTML `tabindex`) has no meaning in Markdown output,
+      // similar to id/class.
+      delete node.properties.tabIndex;
     });
   };
 }
@@ -132,32 +132,31 @@ function collectText(node: any): string {
   return (node.children as any[]).map(collectText).join('');
 }
 
-// `tabstop` is a non-standard attribute; rehype-parse stores it as lowercase
-// "tabstop" (not camelCased), so we check `properties.tabstop` directly.
-function isTabstopMinusOne(node: any): boolean {
-  return node.type === 'element' && node.tagName === 'a' && node.properties?.tabstop === '-1';
+// rehype-parse stores the HTML `tabindex` attribute as `tabIndex` (number).
+function isTabindexMinusOne(node: any): boolean {
+  return node.type === 'element' && node.tagName === 'a' && node.properties?.tabIndex === -1;
 }
 
-function stripTabstopAnchors(node: any): void {
+function stripTabindexAnchors(node: any): void {
   if (!node.children) return;
-  node.children = (node.children as any[]).filter((child: any) => !isTabstopMinusOne(child));
-  (node.children as any[]).forEach(stripTabstopAnchors);
+  node.children = (node.children as any[]).filter((child: any) => !isTabindexMinusOne(child));
+  (node.children as any[]).forEach(stripTabindexAnchors);
 }
 
-function rehypeDropTabstopAnchors() {
+function rehypeDropTabindexAnchors() {
   return (tree: any) => {
-    // Remove <a tabstop="-1"> inside headings (any depth)
+    // Remove <a tabindex="-1"> inside headings (any depth)
     visit(tree, 'element', (node: any) => {
       if (!headingTagNames.has(node.tagName)) return;
-      stripTabstopAnchors(node);
+      stripTabindexAnchors(node);
       return SKIP;
     });
 
-    // Extra condition: also remove <a tabstop="-1"> anywhere whose entire
+    // Extra condition: also remove <a tabindex="-1"> anywhere whose entire
     // text content consists only of decorative symbols (#, ¶, §).
     // These are permalink/anchor icons that add no value in Markdown output.
     visit(tree, 'element', (node: any, index: number | undefined, parent: any) => {
-      if (!isTabstopMinusOne(node)) return;
+      if (!isTabindexMinusOne(node)) return;
       if (index === undefined || !parent?.children) return;
       if (!decorativeAnchorTextPattern.test(collectText(node))) return;
       (parent.children as any[]).splice(index, 1);
@@ -395,7 +394,7 @@ export async function htmlToMarkdown(
   const result = await unified()
     .use(rehypeParse)
     .use(rehypeRemoveComments)
-    .use(rehypeDropTabstopAnchors)
+    .use(rehypeDropTabindexAnchors)
     .use(rehypeSanitize, sanitizeSchema)
     .use(rehypeDropIdAndClass)
     .use(rehypeDropDirWithoutLang)
