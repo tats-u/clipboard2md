@@ -40,3 +40,5 @@ node --run preview
 ## AI usage note
 
 Scaffolded with GitHub Copilot CLI powered by Claude Opus 4.6.
+
+GPT-5.4 has been mainly used for improvements since Opus 4.6 became unavailable in Copilot Pro.
