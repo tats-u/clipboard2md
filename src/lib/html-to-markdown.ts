@@ -183,20 +183,34 @@ function rehypeUnwrapTransparentWrappers() {
 const emptyPhrasingContainerTypes = new Set(['delete', 'emphasis', 'link', 'strong']);
 
 function markdownNodeHasMeaningfulContent(node: any): boolean {
-  switch (node.type) {
-    case 'text':
-      return /\S/u.test(node.value ?? '');
-    case 'inlineCode':
-    case 'html':
-      return typeof node.value === 'string' && node.value.length > 0;
-    case 'break':
-    case 'image':
-    case 'imageReference':
-    case 'linkReference':
-      return true;
-    default:
-      return Array.isArray(node.children) && node.children.some(markdownNodeHasMeaningfulContent);
+  const stack = [node];
+
+  while (stack.length > 0) {
+    const current = stack.pop();
+    if (!current) continue;
+
+    switch (current.type) {
+      case 'text':
+        if (/\S/.test(current.value ?? '')) return true;
+        break;
+      case 'inlineCode':
+      case 'html':
+        if (typeof current.value === 'string' && current.value.length > 0) return true;
+        break;
+      case 'break':
+      case 'image':
+      case 'imageReference':
+      case 'linkReference':
+        return true;
+      default:
+        if (Array.isArray(current.children)) {
+          stack.push(...current.children);
+        }
+        break;
+    }
   }
+
+  return false;
 }
 
 function remarkUnwrapEmptyPhrasingContainers() {
