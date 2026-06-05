@@ -73,6 +73,75 @@ function rehypeDropEmptyProperties() {
   };
 }
 
+const codeBlockLanguageClassPattern = /^language-(.+)$/;
+
+function normalizeCodeBlockLanguage(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : null;
+}
+
+function getCodeBlockLanguageFromProperties(node: any): string | null {
+  const dataLang =
+    normalizeCodeBlockLanguage(node.properties?.dataLang) ??
+    normalizeCodeBlockLanguage(node.properties?.['data-lang']);
+  if (dataLang) return dataLang;
+
+  const classNames = node.properties?.className;
+  const values = Array.isArray(classNames) ? classNames : typeof classNames === 'string' ? [classNames] : [];
+
+  for (const value of values) {
+    const match = codeBlockLanguageClassPattern.exec(String(value));
+    if (match) return normalizeCodeBlockLanguage(match[1]);
+  }
+
+  return null;
+}
+
+function getCodeBlockLanguage(node: any, ancestors: any[]): string | null {
+  const selfLanguage = getCodeBlockLanguageFromProperties(node);
+  if (selfLanguage) return selfLanguage;
+
+  let checkedDivAncestors = 0;
+
+  for (let index = ancestors.length - 1; index >= 0; index -= 1) {
+    const ancestor = ancestors[index];
+    if (ancestor.type !== 'element' || ancestor.tagName !== 'div') continue;
+
+    checkedDivAncestors += 1;
+    const ancestorLanguage = getCodeBlockLanguageFromProperties(ancestor);
+    if (ancestorLanguage) return ancestorLanguage;
+    if (checkedDivAncestors >= 2) break;
+  }
+
+  return null;
+}
+
+function rehypeAnnotateCodeBlockLanguage() {
+  return (tree: any) => {
+    const ancestors: any[] = [];
+
+    const walk = (node: any) => {
+      if (node.type === 'element' && node.tagName === 'pre') {
+        const language = getCodeBlockLanguage(node, ancestors);
+        if (language) {
+          node.data = { ...node.data, clipboard2mdCodeLang: language };
+        }
+      }
+
+      if (!Array.isArray(node.children)) return;
+
+      ancestors.push(node);
+      for (const child of node.children) {
+        walk(child);
+      }
+      ancestors.pop();
+    };
+
+    walk(tree);
+  };
+}
+
 const tableCellSpanPropertyNames = ['colSpan', 'rowSpan'] as const;
 
 function normalizeTableCellSpan(value: unknown): number | null {
@@ -354,6 +423,21 @@ function createBreakHandler(brStyle: Settings['brStyle']) {
   };
 }
 
+function createPreHandler() {
+  const defaultPreHandler = hastToMdastHandlers.pre;
+
+  return (state: any, node: any, parent: any) => {
+    const result = defaultPreHandler(state, node, parent);
+    const language = normalizeCodeBlockLanguage(node.data?.clipboard2mdCodeLang);
+
+    if (language && result?.type === 'code' && !result.lang) {
+      result.lang = language;
+    }
+
+    return result;
+  };
+}
+
 const preservedTagsSet = new Set<string>(preservedSafeHtmlTags);
 const markdownCompatibleAttributeNames = new Map<string, Set<string>>([
   ['a', new Set(['href', 'title'])],
@@ -401,6 +485,7 @@ function shouldPreserveRawHtml(node: any, allowRawHtml: boolean): boolean {
 function createRehypeRemarkHandlers(settings: Settings) {
   const handlers = {
     ...hastToMdastHandlers,
+    pre: createPreHandler(),
     table: createTableHandler(settings.allowRawHtml),
   } as Record<string, any>;
   const tagNames = new Set([...Object.keys(handlers), ...preservedTagsSet]);
@@ -436,6 +521,7 @@ export async function htmlToMarkdown(
     .use(rehypeParse)
     .use(rehypeRemoveComments)
     .use(rehypeDropTabindexAnchors)
+    .use(rehypeAnnotateCodeBlockLanguage)
     .use(rehypeSanitize, sanitizeSchema)
     .use(rehypeDropIdAndClass)
     .use(rehypeDropDirWithoutLang)

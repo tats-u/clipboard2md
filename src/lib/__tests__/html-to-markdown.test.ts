@@ -344,6 +344,50 @@ describe('htmlToMarkdown', () => {
     });
   });
 
+  describe('code block language detection', () => {
+    it('prefers language metadata on pre over ancestor divs', async () => {
+      const html = `
+        <div data-lang="bash">
+          <pre data-lang="shellscript"><code>npx create-react-router@latest my-react-router-app</code></pre>
+        </div>`;
+
+      const md = await htmlToMarkdown(html);
+
+      expect(md.trim()).toBe(
+        '```shellscript\nnpx create-react-router@latest my-react-router-app\n```',
+      );
+    });
+
+    it('detects data-lang from up to two ancestor divs', async () => {
+      const html = `
+        <div class="code-frame" data-lang="bash">
+          <div class="code-copy"></div>
+          <div class="highlight">
+            <pre><code>cd $PROJECT_DIR_NAME\npnpm dev\n</code></pre>
+          </div>
+        </div>`;
+
+      const md = await htmlToMarkdown(html);
+
+      expect(md.trim()).toBe('```bash\ncd $PROJECT_DIR_NAME\npnpm dev\n```');
+    });
+
+    it('detects language-* classes on ancestor divs and stops at the nearest match', async () => {
+      const html = `
+        <div class="language-ts">
+          <section>
+            <div class="language-sh active">
+              <pre><code>pnpm add -D shiki\n</code></pre>
+            </div>
+          </section>
+        </div>`;
+
+      const md = await htmlToMarkdown(html);
+
+      expect(md.trim()).toBe('```sh\npnpm add -D shiki\n```');
+    });
+  });
+
   describe('safe HTML preservation', () => {
     it('preserves safe attributes and unwraps stripped span/div wrappers', async () => {
       const html = [
