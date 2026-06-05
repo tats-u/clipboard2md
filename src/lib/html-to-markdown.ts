@@ -426,8 +426,8 @@ function createBreakHandler(brStyle: Settings['brStyle']) {
 function createPreHandler() {
   const defaultPreHandler = hastToMdastHandlers.pre;
 
-  return (state: any, node: any, parent: any) => {
-    const result = defaultPreHandler(state, node, parent);
+  return (state: any, node: any) => {
+    const result = defaultPreHandler(state, node);
     const language = normalizeCodeBlockLanguage(node.data?.clipboard2mdCodeLang);
 
     if (language && result?.type === 'code' && !result.lang) {
