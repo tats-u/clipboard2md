@@ -3,5 +3,13 @@ allowBuilds:
   sharp: true
 publicHoistPattern:
   - mdast-util-to-markdown
+minimumReleaseAgeExclude:
+  - remark-cjk-friendly
+  - remark-cjk-friendly-gfm-strikethrough
+  - micromark-extension-cjk-friendly
+  - micromark-extension-cjk-friendly-gfm-strikethrough
+  - micromark-extension-cjk-friendly-util
+  - mdast-util-to-markdown-cjk-friendly
+  - mdast-util-to-markdown-cjk-friendly-gfm-strikethrough
 trustPolicy: no-downgrade
 trustPolicyIgnoreAfter: 43200
