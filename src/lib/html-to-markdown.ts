@@ -5,10 +5,17 @@ import rehypeRemark from 'rehype-remark';
 import { defaultHandlers as hastToMdastHandlers } from 'hast-util-to-mdast';
 import { defaultHandlers as mdastToMarkdownHandlers } from 'mdast-util-to-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkCjkFriendly from 'remark-cjk-friendly';
+import remarkCjkFriendlyGfmStrikethrough from 'remark-cjk-friendly-gfm-strikethrough';
 import remarkStringify from 'remark-stringify';
 import { SKIP, visit } from 'unist-util-visit';
 import { toHtml } from 'hast-util-to-html';
-import { preservedSafeHtmlTags, sanitizeSchema, type Settings } from './settings';
+import {
+  defaultSettings,
+  preservedSafeHtmlTags,
+  sanitizeSchema,
+  type Settings,
+} from './settings';
 
 function rehypeRemoveComments() {
   return (tree: any) => {
@@ -509,15 +516,9 @@ export async function htmlToMarkdown(
   html: string,
   settings?: Partial<Settings>,
 ): Promise<string> {
-  const resolvedSettings: Settings = {
-    listMarker: settings?.listMarker ?? '-',
-    brStyle: settings?.brStyle ?? 'backslash',
-    hrStyle: settings?.hrStyle ?? '*',
-    linkTitleStyle: settings?.linkTitleStyle ?? 'remove-matching-url',
-    allowRawHtml: settings?.allowRawHtml ?? true,
-  };
+  const resolvedSettings: Settings = { ...defaultSettings, ...settings };
 
-  const result = await unified()
+  const processor = unified()
     .use(rehypeParse)
     .use(rehypeRemoveComments)
     .use(rehypeDropTabindexAnchors)
@@ -532,7 +533,13 @@ export async function htmlToMarkdown(
       handlers: createRehypeRemarkHandlers(resolvedSettings),
     } as any)
     .use(remarkUnwrapEmptyPhrasingContainers)
-    .use(remarkGfm)
+    .use(remarkGfm);
+
+  if (!resolvedSettings.strictCommonMark) {
+    processor.use(remarkCjkFriendly).use(remarkCjkFriendlyGfmStrikethrough);
+  }
+
+  const result = await processor
     .use(remarkStringify, {
       bullet: resolvedSettings.listMarker,
       rule: resolvedSettings.hrStyle,

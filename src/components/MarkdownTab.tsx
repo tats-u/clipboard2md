@@ -2,6 +2,8 @@ import { useState, useCallback, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
+import remarkCjkFriendly from 'remark-cjk-friendly';
+import remarkCjkFriendlyGfmStrikethrough from 'remark-cjk-friendly-gfm-strikethrough';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize from 'rehype-sanitize';
 import { CopyIcon, CheckIcon, QuoteIcon } from '@primer/octicons-react';
@@ -41,10 +43,20 @@ export default function MarkdownTab({ markdown }: MarkdownTabProps) {
   }, [markdown]);
 
   const remarkPlugins = useMemo(
-    () => settings.brStyle === 'newline'
-      ? [remarkGfm, remarkBreaks]
-      : [remarkGfm],
-    [settings.brStyle],
+    () => {
+      const plugins: any[] = [remarkGfm];
+
+      if (settings.brStyle === 'newline') {
+        plugins.push(remarkBreaks);
+      }
+
+      if (!settings.strictCommonMark) {
+        plugins.push(remarkCjkFriendly, remarkCjkFriendlyGfmStrikethrough);
+      }
+
+      return plugins;
+    },
+    [settings.brStyle, settings.strictCommonMark],
   );
 
   const rehypePlugins = useMemo(

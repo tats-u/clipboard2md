@@ -226,6 +226,32 @@ describe('htmlToMarkdown', () => {
     });
   });
 
+  describe('strict CommonMark', () => {
+    it('escapes surrounding CJK characters around strong emphasis by default', async () => {
+      const html = '<p>この<strong>「語句」</strong>は</p>';
+      const md = await htmlToMarkdown(html);
+
+      expect(md).toContain('&#x306E;**「語句」**&#x306F;');
+      expect(md).not.toContain('この**「語句」**は');
+    });
+
+    it('keeps surrounding CJK characters unescaped around strong emphasis when disabled', async () => {
+      const html = '<p>この<strong>「語句」</strong>は</p>';
+      const md = await htmlToMarkdown(html, { strictCommonMark: false });
+
+      expect(md.trim()).toBe('この**「語句」**は');
+      expect(md).not.toContain('&#x306E;');
+      expect(md).not.toContain('&#x306F;');
+    });
+
+    it('keeps surrounding CJK characters unescaped around strikethrough when disabled', async () => {
+      const html = '<p>この<del>「語句」</del>は</p>';
+      const md = await htmlToMarkdown(html, { strictCommonMark: false });
+
+      expect(md.trim()).toBe('この~~「語句」~~は');
+    });
+  });
+
   describe('table fallback', () => {
     it('converts simple GFM-compatible tables', async () => {
       const html = `

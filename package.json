@@ -32,6 +32,8 @@
     "rehype-remark": "^10.0.1",
     "rehype-sanitize": "^6.0.0",
     "remark-breaks": "^4.0.0",
+    "remark-cjk-friendly": "2.3.0",
+    "remark-cjk-friendly-gfm-strikethrough": "2.3.0",
     "remark-gfm": "^4.0.1",
     "remark-stringify": "^11.0.0",
     "shiki": "^4.0.2",

@@ -29,7 +29,7 @@ export default function SettingsPanel() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-8 bg-gray-900 border border-gray-700 rounded-lg p-4 shadow-xl z-50 min-w-[260px]">
+        <div className="absolute right-0 top-8 bg-gray-900 border border-gray-700 rounded-lg p-4 shadow-xl z-50 min-w-[260px] max-h-[80vh] overflow-y-auto">
           <h3 className="text-xs uppercase tracking-wider text-gray-400 mb-3 font-semibold">
             Settings
           </h3>
@@ -128,6 +128,21 @@ export default function SettingsPanel() {
                 </button>
               ))}
             </div>
+          </div>
+
+          <div className="mb-4">
+            <label className="flex items-center gap-2 text-xs text-gray-300 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={settings.strictCommonMark}
+                onChange={e => updateSettings({ strictCommonMark: e.target.checked })}
+                className="accent-[--color-accent] rounded"
+              />
+              Strict CommonMark
+            </label>
+            <p className="text-[10px] text-gray-600 mt-1 ml-5">
+              Escape CJK characters around emphasis.
+            </p>
           </div>
 
           {/* Allow raw HTML */}
