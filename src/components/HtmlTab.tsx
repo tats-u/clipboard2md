@@ -1,12 +1,14 @@
 import { useState, useCallback } from 'react';
 import { CopyIcon, CheckIcon } from '@primer/octicons-react';
 import CodeBlock from './CodeBlock';
+import ReportConversionBugButton from './ReportConversionBugButton';
 
 interface HtmlTabProps {
   html: string;
+  markdown: string;
 }
 
-export default function HtmlTab({ html }: HtmlTabProps) {
+export default function HtmlTab({ html, markdown }: HtmlTabProps) {
   const [copied, setCopied] = useState(false);
 
   const handleCopyHtml = useCallback(async () => {
@@ -27,17 +29,20 @@ export default function HtmlTab({ html }: HtmlTabProps) {
           <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-400">
             Source
           </h2>
-          <button
-            onClick={handleCopyHtml}
-            className={`flex items-center gap-1.5 px-3 py-1 text-xs rounded border transition-colors duration-200 cursor-pointer
-              ${copied
-                ? 'border-green-500 text-green-400 bg-green-500/10'
-                : 'border-gray-600 text-gray-300 hover:border-accent hover:text-accent copy-breathe'
-              }`}
-          >
-            {copied ? <CheckIcon size={14} /> : <CopyIcon size={14} />}
-            {copied ? 'Copied!' : 'Copy HTML'}
-          </button>
+          <div className="flex items-center gap-2">
+            <ReportConversionBugButton html={html} markdown={markdown} />
+            <button
+              onClick={handleCopyHtml}
+              className={`flex items-center gap-1.5 px-3 py-1 text-xs rounded border transition-colors duration-200 cursor-pointer
+                ${copied
+                  ? 'border-green-500 text-green-400 bg-green-500/10'
+                  : 'border-gray-600 text-gray-300 hover:border-accent hover:text-accent copy-breathe'
+                }`}
+            >
+              {copied ? <CheckIcon size={14} /> : <CopyIcon size={14} />}
+              {copied ? 'Copied!' : 'Copy HTML'}
+            </button>
+          </div>
         </div>
         <CodeBlock code={html} lang="html" />
       </section>

@@ -8,15 +8,17 @@ import rehypeRaw from 'rehype-raw';
 import rehypeSanitize from 'rehype-sanitize';
 import { CopyIcon, CheckIcon, QuoteIcon } from '@primer/octicons-react';
 import CodeBlock from './CodeBlock';
+import ReportConversionBugButton from './ReportConversionBugButton';
 import { useSettings } from './SettingsContext';
 import { sanitizeSchema } from '../lib/settings';
 import { quoteMarkdown } from '../lib/quote-markdown';
 
 interface MarkdownTabProps {
+  html: string;
   markdown: string;
 }
 
-export default function MarkdownTab({ markdown }: MarkdownTabProps) {
+export default function MarkdownTab({ html, markdown }: MarkdownTabProps) {
   const [copied, setCopied] = useState(false);
   const [quoteCopied, setQuoteCopied] = useState(false);
   const { settings } = useSettings();
@@ -75,6 +77,7 @@ export default function MarkdownTab({ markdown }: MarkdownTabProps) {
             Source
           </h2>
           <div className="flex items-center gap-2">
+            <ReportConversionBugButton html={html} markdown={markdown} />
             <button
               onClick={handleCopyAsQuote}
               className={`flex items-center gap-1.5 px-3 py-1 text-xs rounded border transition-colors duration-200 cursor-pointer
