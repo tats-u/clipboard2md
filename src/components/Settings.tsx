@@ -138,10 +138,10 @@ export default function SettingsPanel() {
                 onChange={e => updateSettings({ strictCommonMark: e.target.checked })}
                 className="accent-[--color-accent] rounded"
               />
-              Strict CommonMark
+              Strict CommonMark Emphasis
             </label>
             <p className="text-[10px] text-gray-600 mt-1 ml-5">
-              Escape CJK characters around emphasis.
+              Escape characters around emphasis even in CJK context
             </p>
           </div>
 
