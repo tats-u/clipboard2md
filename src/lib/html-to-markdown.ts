@@ -29,6 +29,17 @@ function rehypeRemoveComments() {
   };
 }
 
+function rehypeRemoveStyleElements() {
+  return (tree: any) => {
+    visit(tree, 'element', (node: any, index: number | undefined, parent: any) => {
+      if (node.tagName !== 'style') return;
+      if (index === undefined || !parent?.children) return;
+      parent.children.splice(index, 1);
+      return [SKIP, index];
+    });
+  };
+}
+
 function rehypeDropDirWithoutLang() {
   return (tree: any) => {
     visit(tree, 'element', (node: any) => {
@@ -521,6 +532,7 @@ export async function htmlToMarkdown(
   const processor = unified()
     .use(rehypeParse)
     .use(rehypeRemoveComments)
+    .use(rehypeRemoveStyleElements)
     .use(rehypeDropTabindexAnchors)
     .use(rehypeAnnotateCodeBlockLanguage)
     .use(rehypeSanitize, sanitizeSchema)

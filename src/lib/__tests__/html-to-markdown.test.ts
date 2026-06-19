@@ -60,6 +60,25 @@ describe('htmlToMarkdown', () => {
     });
   });
 
+  describe('style tag removal', () => {
+    it('strips style tags and their CSS from output', async () => {
+      const html = `<style>
+em {
+  font-style: normal;
+  text-emphasis: filled dot;
+}
+</style><p>ここは<em>絶対に</em>圏点にしてください</p>`;
+
+      const md = await htmlToMarkdown(html);
+
+      expect(md).toContain('ここは');
+      expect(md).toContain('絶対に');
+      expect(md).toContain('圏点にしてください');
+      expect(md).not.toContain('font-style');
+      expect(md).not.toContain('text-emphasis');
+    });
+  });
+
   describe('bare autolinks', () => {
     it('outputs bare URL for http autolinks', async () => {
       const html = '<a href="https://example.com">https://example.com</a>';
