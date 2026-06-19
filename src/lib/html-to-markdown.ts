@@ -50,6 +50,39 @@ function rehypeDropDirWithoutLang() {
   };
 }
 
+function normalizeHeadingLevel(value: unknown): number | null {
+  const normalized =
+    typeof value === 'number'
+      ? value
+      : typeof value === 'string' && /^\d+$/.test(value)
+        ? Number.parseInt(value, 10)
+        : Number.NaN;
+
+  if (!Number.isInteger(normalized) || normalized < 1 || normalized > 6) {
+    return null;
+  }
+
+  return normalized;
+}
+
+function rehypeNormalizeAriaHeadings() {
+  return (tree: any) => {
+    visit(tree, 'element', (node: any) => {
+      if (node.properties?.role !== 'heading') return;
+
+      const level =
+        normalizeHeadingLevel(node.properties?.ariaLevel) ??
+        normalizeHeadingLevel(node.properties?.['aria-level']);
+      if (level === null) return;
+
+      node.tagName = `h${level}`;
+      delete node.properties.role;
+      delete node.properties.ariaLevel;
+      delete node.properties['aria-level'];
+    });
+  };
+}
+
 function rehypeDropEmptyProperties() {
   return (tree: any) => {
     visit(tree, 'element', (node: any) => {
@@ -533,6 +566,7 @@ export async function htmlToMarkdown(
     .use(rehypeParse)
     .use(rehypeRemoveComments)
     .use(rehypeRemoveStyleElements)
+    .use(rehypeNormalizeAriaHeadings)
     .use(rehypeDropTabindexAnchors)
     .use(rehypeAnnotateCodeBlockLanguage)
     .use(rehypeSanitize, sanitizeSchema)

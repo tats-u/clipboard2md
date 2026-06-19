@@ -19,6 +19,25 @@ describe('htmlToMarkdown', () => {
       expect(md).not.toMatch(/^=+$/m);
       expect(md).not.toMatch(/^-+$/m);
     });
+
+    it('converts role heading with aria-level into markdown headings', async () => {
+      const html = [
+        '<div role="heading" aria-level="3">micromark の特徴<span></span></div>',
+        '<div><a href="https://github.com/micromark/micromark">micromark</a> は、最も普及している Markdown プロセッサツールチェーン群である「unified / remark」ファミリーの最下層を支えるエンジンとして開発されました。</div>',
+      ].join('');
+
+      const md = await htmlToMarkdown(html);
+
+      expect(md.trim()).toBe(
+        '### micromark の特徴\n\n[micromark](https://github.com/micromark/micromark) は、最も普及している Markdown プロセッサツールチェーン群である「unified / remark」ファミリーの最下層を支えるエンジンとして開発されました。',
+      );
+    });
+
+    it('does not convert role heading when aria-level is invalid', async () => {
+      const html = '<div role="heading" aria-level="7">Title</div>';
+      const md = await htmlToMarkdown(html);
+      expect(md.trim()).toBe('Title');
+    });
   });
 
   describe('list marker', () => {
