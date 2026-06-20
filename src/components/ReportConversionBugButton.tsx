@@ -79,7 +79,17 @@ export default function ReportConversionBugButton({ html, markdown }: ReportConv
       </button>
 
       {showManualDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="manual-report-dialog-title">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="manual-report-dialog-title"
+          onClick={(event) => {
+            if (event.target === event.currentTarget) {
+              setShowManualDialog(false);
+            }
+          }}
+        >
           <div className="w-full max-w-xl rounded-xl border border-gray-700 bg-gray-900 p-5 shadow-2xl">
             <div className="mb-4 flex items-start justify-between gap-4">
               <div>
