@@ -142,9 +142,9 @@ function AppContent({ base }: { base: string }) {
           {/* Content */}
           <main>
             {activeTab === 'markdown' ? (
-              <MarkdownTab markdown={markdown} />
+              <MarkdownTab html={html} markdown={markdown} />
             ) : (
-              <HtmlTab html={html} />
+              <HtmlTab html={html} markdown={markdown} />
             )}
           </main>
         </>
