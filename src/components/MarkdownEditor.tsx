@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { EditorState } from '@codemirror/state';
-import { EditorView } from '@codemirror/view';
+import { EditorView, type ViewUpdate } from '@codemirror/view';
 import { markdown } from '@codemirror/lang-markdown';
 import { oneDark } from '@codemirror/theme-one-dark';
 import { basicSetup } from 'codemirror';
@@ -65,7 +65,7 @@ export default function MarkdownEditor({ value, onChange }: MarkdownEditorProps)
             'aria-label': 'Markdown source editor',
             spellcheck: 'false',
           }),
-          EditorView.updateListener.of((update) => {
+          EditorView.updateListener.of((update: ViewUpdate) => {
             if (update.docChanged) {
               onChangeRef.current(update.state.doc.toString());
             }
