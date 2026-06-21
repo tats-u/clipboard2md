@@ -530,10 +530,6 @@ function createImageHandler(settings: Settings) {
       return result;
     }
 
-    if (settings.imageStyle === 'preserve-size' && shouldPreserveRawHtml(node, settings.allowRawHtml)) {
-      return createRawHtmlNode(state, node);
-    }
-
     return defaultImageHandler(state, node);
   };
 }
@@ -595,11 +591,13 @@ function createRehypeRemarkHandlers(settings: Settings) {
     Array.from(tagNames).map((tagName) => [
       tagName,
       (state: any, node: any, parent: any) => {
-        if (tagName === 'img') {
-          return handlers[tagName](state, node, parent);
-        }
+        const preserveNodeAsRawHtml =
+          tagName === 'img'
+            ? settings.imageStyle === 'preserve-size' &&
+              shouldPreserveRawHtml(node, settings.allowRawHtml)
+            : shouldPreserveRawHtml(node, settings.allowRawHtml);
 
-        if (shouldPreserveRawHtml(node, settings.allowRawHtml)) {
+        if (preserveNodeAsRawHtml) {
           return createRawHtmlNode(state, node);
         }
 

@@ -137,7 +137,7 @@ export default function SettingsPanel() {
                 {
                   value: 'preserve-size',
                   label: 'Keep size metadata',
-                  description: 'Default. Uses HTML when image-only details like width/height must be preserved.',
+                  description: 'Default. Uses HTML when width/height and similar image attributes must be preserved.',
                 },
                 {
                   value: 'markdown',
