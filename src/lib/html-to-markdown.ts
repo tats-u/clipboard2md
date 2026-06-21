@@ -502,13 +502,20 @@ function createPreHandler() {
   };
 }
 
+interface ImageLikeNode {
+  properties?: {
+    alt?: unknown;
+    [key: string]: unknown;
+  };
+}
+
 function normalizeImageAltText(value: unknown): string | null {
   if (typeof value !== 'string') return null;
   const normalized = value.trim();
   return normalized.length > 0 ? normalized : null;
 }
 
-function getImagePlaceholderText(node: any): string {
+function getImagePlaceholderText(node: ImageLikeNode): string {
   const alt = normalizeImageAltText(node.properties?.alt);
   return alt ? `(Image: ${alt})` : '(Image)';
 }
@@ -516,7 +523,7 @@ function getImagePlaceholderText(node: any): string {
 function createImageHandler(settings: Settings) {
   const defaultImageHandler = hastToMdastHandlers.img;
 
-  return (state: any, node: any, parent: any) => {
+  return (state: any, node: ImageLikeNode) => {
     if (settings.imageStyle === 'placeholder') {
       const result = { type: 'text', value: getImagePlaceholderText(node) };
       state.patch(node, result);
