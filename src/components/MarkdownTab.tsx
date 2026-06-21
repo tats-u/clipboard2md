@@ -8,6 +8,7 @@ import rehypeRaw from 'rehype-raw';
 import rehypeSanitize from 'rehype-sanitize';
 import { CopyIcon, CheckIcon, QuoteIcon } from '@primer/octicons-react';
 import CodeBlock from './CodeBlock';
+import MarkdownEditor from './MarkdownEditor';
 import ReportConversionBugButton from './ReportConversionBugButton';
 import { useSettings } from './SettingsContext';
 import { sanitizeSchema } from '../lib/settings';
@@ -164,12 +165,9 @@ export default function MarkdownTab({ html, markdown }: MarkdownTabProps) {
           </div>
         </div>
         {isEditing ? (
-          <textarea
+          <MarkdownEditor
             value={draftMarkdown}
-            onChange={(event) => setDraftMarkdown(event.target.value)}
-            className="min-h-[18rem] max-h-[50vh] w-full resize-y overflow-auto rounded border border-gray-700 bg-[#121212] p-4 font-mono text-sm leading-relaxed text-gray-100 outline-none transition-colors focus:border-accent"
-            spellCheck={false}
-            aria-label="Markdown source editor"
+            onChange={setDraftMarkdown}
           />
         ) : (
           <CodeBlock code={currentMarkdown} lang="markdown" />
