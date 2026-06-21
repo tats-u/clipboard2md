@@ -527,7 +527,7 @@ function createImageHandler(settings: Settings) {
       return createRawHtmlNode(state, node);
     }
 
-    return defaultImageHandler(state, node, parent);
+    return defaultImageHandler(state, node);
   };
 }
 
