@@ -523,7 +523,7 @@ function getImagePlaceholderText(node: ImageLikeNode): string {
 function createImageHandler(settings: Settings) {
   const defaultImageHandler = hastToMdastHandlers.img;
 
-  return (state: any, node: ImageLikeNode) => {
+  return (state: any, node: any) => {
     if (settings.imageStyle === 'placeholder') {
       const result = { type: 'text', value: getImagePlaceholderText(node) };
       state.patch(node, result);
