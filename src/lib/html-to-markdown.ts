@@ -356,6 +356,16 @@ function remarkUnwrapEmptyPhrasingContainers() {
   };
 }
 
+function remarkStripLinks() {
+  return (tree: any) => {
+    visit(tree, 'link', (node: any, index: number | undefined, parent: any) => {
+      if (index === undefined || !parent) return;
+      parent.children.splice(index, 1, ...node.children);
+      return [SKIP, index];
+    });
+  };
+}
+
 function getEffectiveLinkTitle(
   node: any,
   linkTitleStyle: Settings['linkTitleStyle'],
@@ -583,6 +593,10 @@ export async function htmlToMarkdown(
     } as any)
     .use(remarkUnwrapEmptyPhrasingContainers)
     .use(remarkGfm);
+
+  if (resolvedSettings.stripLinks) {
+    processor.use(remarkStripLinks);
+  }
 
   if (!resolvedSettings.strictCommonMark) {
     processor.use(remarkCjkFriendly).use(remarkCjkFriendlyGfmStrikethrough);

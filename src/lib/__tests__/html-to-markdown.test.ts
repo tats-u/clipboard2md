@@ -134,6 +134,18 @@ em {
       expect(md).toContain('[click here](https://example.com)');
     });
 
+    it('outputs only link labels when configured', async () => {
+      const html = '<p>Visit <a href="https://example.com">Example</a> now</p>';
+      const md = await htmlToMarkdown(html, { stripLinks: true });
+      expect(md.trim()).toBe('Visit Example now');
+    });
+
+    it('preserves formatted link labels when stripping links', async () => {
+      const html = '<a href="https://example.com">click <strong>here</strong></a>';
+      const md = await htmlToMarkdown(html, { stripLinks: true });
+      expect(md.trim()).toBe('click **here**');
+    });
+
     it('keeps markdown link syntax when the link title must be preserved', async () => {
       const html = '<a href="https://example.com" title="Example">https://example.com</a>';
       const md = await htmlToMarkdown(html, { linkTitleStyle: 'preserve' });

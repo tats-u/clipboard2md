@@ -134,6 +134,21 @@ export default function SettingsPanel() {
             <label className="flex items-center gap-2 text-xs text-gray-300 cursor-pointer">
               <input
                 type="checkbox"
+                checked={settings.stripLinks}
+                onChange={e => updateSettings({ stripLinks: e.target.checked })}
+                className="accent-[--color-accent] rounded"
+              />
+              Remove links, keep labels only
+            </label>
+            <p className="text-[10px] text-gray-600 mt-1 ml-5">
+              Useful when you want shorter Markdown for prompts, translation, or AI chat.
+            </p>
+          </div>
+
+          <div className="mb-4">
+            <label className="flex items-center gap-2 text-xs text-gray-300 cursor-pointer">
+              <input
+                type="checkbox"
                 checked={settings.strictCommonMark}
                 onChange={e => updateSettings({ strictCommonMark: e.target.checked })}
                 className="accent-[--color-accent] rounded"

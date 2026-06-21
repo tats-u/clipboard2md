@@ -33,6 +33,7 @@ function formatSettings(settings: Settings): string {
     `- brStyle: ${settings.brStyle}`,
     `- hrStyle: ${settings.hrStyle}`,
     `- linkTitleStyle: ${settings.linkTitleStyle}`,
+    `- stripLinks: ${settings.stripLinks}`,
     `- strictCommonMark: ${settings.strictCommonMark}`,
     `- allowRawHtml: ${settings.allowRawHtml}`,
   ].join('\n');

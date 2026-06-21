@@ -20,6 +20,7 @@ describe('createConversionBugReportUrls', () => {
     expect(directParams.get('template')).toBe('conversion-bug-report.yml');
     expect(directParams.get('problematic_html')).toBe('<p>Hello</p>');
     expect(directParams.get('actual_markdown')).toBe('Hello');
+    expect(directParams.get('conversion_settings')).toContain('- stripLinks: false');
     expect(directParams.get('conversion_settings')).toContain('- strictCommonMark: true');
 
     const fallbackParams = readSearchParams(fallbackUrl);
