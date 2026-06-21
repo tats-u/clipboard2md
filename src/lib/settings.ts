@@ -5,6 +5,7 @@ export interface Settings {
   brStyle: 'backslash' | 'spaces' | 'newline';
   hrStyle: '*' | '-' | '_';
   linkTitleStyle: 'remove-all' | 'remove-matching-url' | 'preserve';
+  stripLinks: boolean;
   strictCommonMark: boolean;
   allowRawHtml: boolean;
 }
@@ -14,6 +15,7 @@ export const defaultSettings: Settings = {
   brStyle: 'backslash',
   hrStyle: '*',
   linkTitleStyle: 'remove-matching-url',
+  stripLinks: false,
   strictCommonMark: true,
   allowRawHtml: true,
 };
