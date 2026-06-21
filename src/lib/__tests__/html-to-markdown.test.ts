@@ -20,6 +20,7 @@ describe('htmlToMarkdown', () => {
       expect(md).not.toMatch(/^-+$/m);
     });
 
+    // Google AI search
     it('converts role heading with aria-level into markdown headings', async () => {
       const html = [
         '<div role="heading" aria-level="3">micromark の特徴<span></span></div>',
@@ -33,6 +34,7 @@ describe('htmlToMarkdown', () => {
       );
     });
 
+    // (Google AI search)
     it('does not convert role heading when aria-level is invalid', async () => {
       const html = '<div role="heading" aria-level="7">Title</div>';
       const md = await htmlToMarkdown(html);
@@ -79,6 +81,7 @@ describe('htmlToMarkdown', () => {
     });
   });
 
+  // Microsoft 365 Copilot Chat
   describe('style tag removal', () => {
     it('strips style tags and their CSS from output', async () => {
       const html = `<style>
@@ -175,6 +178,7 @@ em {
       expect(md.trim()).toBe('[click here](https://example.com)');
     });
 
+    // Google AI search
     it('strips aria-label from links so inline markdown links stay inline', async () => {
       const html = `
         <p>
