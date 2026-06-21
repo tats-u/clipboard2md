@@ -244,6 +244,40 @@ em {
     });
   });
 
+  describe('image output', () => {
+    it('preserves raw HTML for sized images by default', async () => {
+      const html = '<p><img src="https://example.com/cat.png" alt="Cat" width="320" height="180"></p>';
+      const md = await htmlToMarkdown(html);
+
+      expect(md).toContain('<img src="https://example.com/cat.png" alt="Cat" width="320" height="180">');
+      expect(md).not.toContain('![Cat]');
+    });
+
+    it('always uses Markdown image syntax when configured', async () => {
+      const html = '<p><img src="https://example.com/cat.png" alt="Cat" title="Sleepy" width="320" height="180"></p>';
+      const md = await htmlToMarkdown(html, { imageStyle: 'markdown' });
+
+      expect(md.trim()).toBe('![Cat](https://example.com/cat.png "Sleepy")');
+      expect(md).not.toContain('<img');
+      expect(md).not.toContain('width=');
+      expect(md).not.toContain('height=');
+    });
+
+    it('replaces images with placeholder text that includes alt text when configured', async () => {
+      const html = '<p>Before <img src="https://example.com/cat.png" alt="Cat"> after</p>';
+      const md = await htmlToMarkdown(html, { imageStyle: 'placeholder' });
+
+      expect(md.trim()).toBe('Before (Image: Cat) after');
+    });
+
+    it('uses a generic placeholder when alt text is missing or empty', async () => {
+      const html = '<p><img src="https://example.com/cat.png" alt=""> <img src="https://example.com/dog.png"></p>';
+      const md = await htmlToMarkdown(html, { imageStyle: 'placeholder' });
+
+      expect(md.trim()).toBe('(Image) (Image)');
+    });
+  });
+
   describe('thematic break (hr) style', () => {
     const html = '<p>before</p><hr><p>after</p>';
 

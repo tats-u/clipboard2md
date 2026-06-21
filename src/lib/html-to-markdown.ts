@@ -502,6 +502,35 @@ function createPreHandler() {
   };
 }
 
+function normalizeImageAltText(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : null;
+}
+
+function getImagePlaceholderText(node: any): string {
+  const alt = normalizeImageAltText(node.properties?.alt);
+  return alt ? `(Image: ${alt})` : '(Image)';
+}
+
+function createImageHandler(settings: Settings) {
+  const defaultImageHandler = hastToMdastHandlers.img;
+
+  return (state: any, node: any, parent: any) => {
+    if (settings.imageStyle === 'placeholder') {
+      const result = { type: 'text', value: getImagePlaceholderText(node) };
+      state.patch(node, result);
+      return result;
+    }
+
+    if (settings.imageStyle === 'preserve-size' && shouldPreserveRawHtml(node, settings.allowRawHtml)) {
+      return createRawHtmlNode(state, node);
+    }
+
+    return defaultImageHandler(state, node, parent);
+  };
+}
+
 const preservedTagsSet = new Set<string>(preservedSafeHtmlTags);
 const markdownCompatibleAttributeNames = new Map<string, Set<string>>([
   ['a', new Set(['href', 'title'])],
@@ -549,6 +578,7 @@ function shouldPreserveRawHtml(node: any, allowRawHtml: boolean): boolean {
 function createRehypeRemarkHandlers(settings: Settings) {
   const handlers = {
     ...hastToMdastHandlers,
+    img: createImageHandler(settings),
     pre: createPreHandler(),
     table: createTableHandler(settings.allowRawHtml),
   } as Record<string, any>;
@@ -558,6 +588,10 @@ function createRehypeRemarkHandlers(settings: Settings) {
     Array.from(tagNames).map((tagName) => [
       tagName,
       (state: any, node: any, parent: any) => {
+        if (tagName === 'img') {
+          return handlers[tagName](state, node, parent);
+        }
+
         if (shouldPreserveRawHtml(node, settings.allowRawHtml)) {
           return createRawHtmlNode(state, node);
         }

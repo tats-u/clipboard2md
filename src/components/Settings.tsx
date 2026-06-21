@@ -131,6 +131,42 @@ export default function SettingsPanel() {
           </div>
 
           <div className="mb-4">
+            <label className="text-xs text-gray-400 block mb-1.5">Images</label>
+            <div className="flex flex-col gap-2">
+              {([
+                {
+                  value: 'preserve-size',
+                  label: 'Keep size metadata',
+                  description: 'Default. Uses HTML when image-only details like width/height must be preserved.',
+                },
+                {
+                  value: 'markdown',
+                  label: 'Always use Markdown image syntax',
+                  description: 'Keep only URL, alt text, and title.',
+                },
+                {
+                  value: 'placeholder',
+                  label: 'Replace with placeholder text',
+                  description: 'Outputs (Image) or (Image: alt text).',
+                },
+              ] as const).map(({ value, label, description }) => (
+                <button
+                  key={value}
+                  onClick={() => updateSettings({ imageStyle: value })}
+                  className={`px-3 py-2 text-sm rounded border cursor-pointer transition-colors text-left
+                    ${settings.imageStyle === value
+                      ? 'border-accent text-accent bg-accent/10'
+                      : 'border-gray-700 text-gray-400 hover:border-gray-500'
+                    }`}
+                >
+                  <div>{label}</div>
+                  <div className="text-[10px] text-gray-500 mt-0.5">{description}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="mb-4">
             <label className="flex items-center gap-2 text-xs text-gray-300 cursor-pointer">
               <input
                 type="checkbox"
