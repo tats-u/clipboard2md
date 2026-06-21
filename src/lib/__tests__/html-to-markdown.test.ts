@@ -175,6 +175,25 @@ em {
       expect(md.trim()).toBe('[click here](https://example.com)');
     });
 
+    it('strips aria-label from links so inline markdown links stay inline', async () => {
+      const html = `
+        <p>
+          ITやプログラミングの文脈では、<span data-processed="true"><a
+            href="https://github.com/micromark/micromark"
+            aria-label="GitHubのmicromark. リンクのプレビュー。サイト: GitHub。"
+          >GitHubのmicromark</a></span>を指します
+        </p>
+      `;
+
+      const md = await htmlToMarkdown(html, { allowRawHtml: true });
+
+      expect(md.trim()).toBe(
+        'ITやプログラミングの文脈では、[GitHubのmicromark](https://github.com/micromark/micromark)を指します',
+      );
+      expect(md).not.toContain('aria-label');
+      expect(md).not.toContain('\n\n<a ');
+    });
+
     it('keeps matching link titles when configured not to strip them', async () => {
       const html = '<a href="http://example.com/" title="http://example.com/">http://example.com/</a>';
       const md = await htmlToMarkdown(html, { linkTitleStyle: 'preserve' });
@@ -591,6 +610,16 @@ em {
       expect(md).not.toContain('<section');
       expect(md).not.toContain('<article');
       expect(md).not.toContain('<div');
+    });
+
+    it('keeps inline safe HTML inside a paragraph without extra blank lines', async () => {
+      const html = '<p>Utilities for <span lang="ja">base64</span> encoding and decoding.</p>';
+
+      const md = await htmlToMarkdown(html, { allowRawHtml: true });
+
+      expect(md.trim()).toBe('Utilities for <span lang="ja">base64</span> encoding and decoding.');
+      expect(md).not.toContain('\n\n<span lang="ja">');
+      expect(md).not.toContain('</span>\n\n');
     });
   });
 });
