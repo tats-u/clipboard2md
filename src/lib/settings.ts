@@ -5,6 +5,7 @@ export interface Settings {
   brStyle: 'backslash' | 'spaces' | 'newline';
   hrStyle: '*' | '-' | '_';
   linkTitleStyle: 'remove-all' | 'remove-matching-url' | 'preserve';
+  imageStyle: 'preserve-size' | 'markdown' | 'placeholder';
   stripLinks: boolean;
   strictCommonMark: boolean;
   allowRawHtml: boolean;
@@ -15,6 +16,7 @@ export const defaultSettings: Settings = {
   brStyle: 'backslash',
   hrStyle: '*',
   linkTitleStyle: 'remove-matching-url',
+  imageStyle: 'preserve-size',
   stripLinks: false,
   strictCommonMark: true,
   allowRawHtml: true,

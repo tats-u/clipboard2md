@@ -502,6 +502,38 @@ function createPreHandler() {
   };
 }
 
+interface ImageLikeNode {
+  properties?: {
+    alt?: unknown;
+    [key: string]: unknown;
+  };
+}
+
+function normalizeImageAltText(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : null;
+}
+
+function getImagePlaceholderText(node: ImageLikeNode): string {
+  const alt = normalizeImageAltText(node.properties?.alt);
+  return alt ? `(Image: ${alt})` : '(Image)';
+}
+
+function createImageHandler(settings: Settings) {
+  const defaultImageHandler = hastToMdastHandlers.img;
+
+  return (state: any, node: any) => {
+    if (settings.imageStyle === 'placeholder') {
+      const result = { type: 'text', value: getImagePlaceholderText(node) };
+      state.patch(node, result);
+      return result;
+    }
+
+    return defaultImageHandler(state, node);
+  };
+}
+
 const preservedTagsSet = new Set<string>(preservedSafeHtmlTags);
 const markdownCompatibleAttributeNames = new Map<string, Set<string>>([
   ['a', new Set(['href', 'title'])],
@@ -549,6 +581,7 @@ function shouldPreserveRawHtml(node: any, allowRawHtml: boolean): boolean {
 function createRehypeRemarkHandlers(settings: Settings) {
   const handlers = {
     ...hastToMdastHandlers,
+    img: createImageHandler(settings),
     pre: createPreHandler(),
     table: createTableHandler(settings.allowRawHtml),
   } as Record<string, any>;
@@ -558,7 +591,13 @@ function createRehypeRemarkHandlers(settings: Settings) {
     Array.from(tagNames).map((tagName) => [
       tagName,
       (state: any, node: any, parent: any) => {
-        if (shouldPreserveRawHtml(node, settings.allowRawHtml)) {
+        const preserveNodeAsRawHtml =
+          tagName === 'img'
+            ? settings.imageStyle === 'preserve-size' &&
+              shouldPreserveRawHtml(node, settings.allowRawHtml)
+            : shouldPreserveRawHtml(node, settings.allowRawHtml);
+
+        if (preserveNodeAsRawHtml) {
           return createRawHtmlNode(state, node);
         }
 
