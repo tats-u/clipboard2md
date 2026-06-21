@@ -144,7 +144,7 @@ function AppContent({ base }: { base: string }) {
             {activeTab === 'markdown' ? (
               <MarkdownTab html={html} markdown={markdown} />
             ) : (
-              <HtmlTab html={html} markdown={markdown} />
+              <HtmlTab html={html} markdown={markdown} onToast={showToast} />
             )}
           </main>
         </>
