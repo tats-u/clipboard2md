@@ -235,6 +235,9 @@ function rehypeDropIdAndClass() {
       if (!node.properties) return;
       delete node.properties.id;
       delete node.properties.className;
+      // `aria-label` has no Markdown equivalent and can force raw HTML output.
+      delete node.properties.ariaLabel;
+      delete node.properties['aria-label'];
       // `tabIndex` (from HTML `tabindex`) has no meaning in Markdown output,
       // similar to id/class.
       delete node.properties.tabIndex;
