@@ -411,6 +411,18 @@ function remarkUnwrapEmptyPhrasingContainers() {
   };
 }
 
+function remarkRemoveEmptyParagraphs() {
+  return (tree: any) => {
+    visit(tree, 'paragraph', (node: any, index: number | undefined, parent: any) => {
+      if (index === undefined || !parent?.children) return;
+      if (markdownNodeHasMeaningfulContent(node)) return;
+
+      parent.children.splice(index, 1);
+      return [SKIP, index];
+    });
+  };
+}
+
 function remarkStripLinks() {
   return (tree: any) => {
     visit(tree, 'link', (node: any, index: number | undefined, parent: any) => {
@@ -687,6 +699,7 @@ export async function htmlToMarkdown(
       handlers: createRehypeRemarkHandlers(resolvedSettings),
     } as any)
     .use(remarkUnwrapEmptyPhrasingContainers)
+    .use(remarkRemoveEmptyParagraphs)
     .use(remarkGfm);
 
   if (resolvedSettings.stripLinks) {
