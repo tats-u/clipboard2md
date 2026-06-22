@@ -288,6 +288,61 @@ function rehypeDropTabindexAnchors() {
   };
 }
 
+function normalizeHeadingId(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim();
+  if (normalized.length === 0) return null;
+  return normalized.replace(/^user-content-/, '');
+}
+
+function getHrefFragment(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const hashIndex = value.lastIndexOf('#');
+  if (hashIndex < 0 || hashIndex === value.length - 1) return null;
+
+  const fragment = value.slice(hashIndex + 1);
+
+  try {
+    return decodeURIComponent(fragment);
+  } catch {
+    return fragment;
+  }
+}
+
+function unwrapMatchingHeadingSelfLinks(node: any, headingId: string): void {
+  if (!Array.isArray(node.children)) return;
+
+  for (let index = 0; index < node.children.length; ) {
+    const child = node.children[index];
+
+    if (
+      child?.type === 'element' &&
+      child.tagName === 'a' &&
+      getHrefFragment(child.properties?.href) === headingId
+    ) {
+      node.children.splice(index, 1, ...(child.children ?? []));
+      continue;
+    }
+
+    unwrapMatchingHeadingSelfLinks(child, headingId);
+    index += 1;
+  }
+}
+
+function rehypeUnwrapHeadingSelfLinks() {
+  return (tree: any) => {
+    visit(tree, 'element', (node: any) => {
+      if (!headingTagNames.has(node.tagName)) return;
+
+      const headingId = normalizeHeadingId(node.properties?.id);
+      if (!headingId) return;
+
+      unwrapMatchingHeadingSelfLinks(node, headingId);
+      return SKIP;
+    });
+  };
+}
+
 const transparentWrapperTags = new Set(['article', 'div', 'section', 'span']);
 
 function rehypeUnwrapTransparentWrappers() {
@@ -621,6 +676,7 @@ export async function htmlToMarkdown(
     .use(rehypeNormalizeAriaHeadings)
     .use(rehypeDropTabindexAnchors)
     .use(rehypeAnnotateCodeBlockLanguage)
+    .use(rehypeUnwrapHeadingSelfLinks)
     .use(rehypeSanitize, sanitizeSchema)
     .use(rehypeDropIdAndClass)
     .use(rehypeDropDirWithoutLang)

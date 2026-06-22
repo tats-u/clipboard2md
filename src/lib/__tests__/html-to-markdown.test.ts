@@ -20,6 +20,15 @@ describe('htmlToMarkdown', () => {
       expect(md).not.toMatch(/^-+$/m);
     });
 
+    it('unwraps heading self-links when the href fragment matches the heading id', async () => {
+      const html =
+        '<h3 id="whats-new"><a class="heading-link" href="https://github.blog/changelog/2026-06-19-ai-credits-consumed-per-user-now-in-the-copilot-usage-metrics-api/#whats-new">What’s new<span class="heading-hash pl-2 text-italic text-bold" aria-hidden="true"></span></a></h3>';
+      const md = await htmlToMarkdown(html);
+
+      expect(md.trim()).toBe('### What’s new');
+      expect(md).not.toContain('[What’s new]');
+    });
+
     // Google AI search
     it('converts role heading with aria-level into markdown headings', async () => {
       const html = [
