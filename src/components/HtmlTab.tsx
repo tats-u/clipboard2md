@@ -107,7 +107,7 @@ export default function HtmlTab({ html, markdown, onToast }: HtmlTabProps) {
           </h2>
         </div>
         <div
-          className="html-preview bg-white text-gray-900 p-4 rounded overflow-auto max-h-[50vh] border border-gray-700"
+          className="html-preview bg-white text-gray-900 [&_a]:text-[revert] [&_a]:underline p-4 rounded overflow-auto max-h-[50vh] border border-gray-700"
           dangerouslySetInnerHTML={{ __html: html }}
         />
       </section>
