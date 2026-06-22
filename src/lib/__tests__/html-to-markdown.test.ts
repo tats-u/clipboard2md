@@ -671,6 +671,25 @@ em {
       expect(md).not.toContain('<div');
     });
 
+    it('does not add an extra blank line after heading wrapper divs ending in block content', async () => {
+      const html = [
+        '<p dir="auto">After this, make sure to re-run <code>yarn build</code> to fix the broken <code>./dist/main.js</code>.</p>',
+        '<div class="markdown-heading" dir="auto">',
+        '<h2 tabindex="-1" class="heading-element" dir="auto">License</h2>',
+        '<a id="user-content-license" class="anchor" aria-label="Permalink: License" href="https://github.com/tats-u/prettier-plugin-md-nocjsp/#license">',
+        '<svg data-component="Octicon" class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"></svg>',
+        '</a>',
+        '</div>',
+        '<p dir="auto">MIT License (same as Prettier itself)</p>',
+      ].join('');
+
+      const md = await htmlToMarkdown(html);
+
+      expect(md).toBe(
+        'After this, make sure to re-run `yarn build` to fix the broken `./dist/main.js`.\n\n## License\n\nMIT License (same as Prettier itself)\n',
+      );
+    });
+
     it('keeps inline safe HTML inside a paragraph without extra blank lines', async () => {
       const html = '<p>Utilities for <span lang="ja">base64</span> encoding and decoding.</p>';
 
