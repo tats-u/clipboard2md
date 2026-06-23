@@ -108,12 +108,13 @@ export default function SettingsPanel() {
           </div>
 
           <div className="mb-4">
-            <label className="text-xs text-gray-400 block mb-1.5">Link title</label>
+            <label className="text-xs text-gray-400 block mb-1.5">Title</label>
             <div className="flex flex-col gap-2">
               {([
-                { value: 'remove-all', label: 'Strip all' },
-                { value: 'remove-matching-url', label: 'Strip matching URL' },
-                { value: 'preserve', label: 'Keep' },
+                { value: 'remove-all', label: 'Strip all titles' },
+                { value: 'remove-matching-url', label: 'Keep non-URL link titles only' },
+                { value: 'preserve-links', label: 'Keep link titles' },
+                { value: 'preserve-all', label: 'Keep all titles' },
               ] as const).map(({ value, label }) => (
                 <button
                   key={value}

@@ -11,7 +11,7 @@ import remarkStringify from 'remark-stringify';
 import { SKIP, visit } from 'unist-util-visit';
 import { toHtml } from 'hast-util-to-html';
 import {
-  defaultSettings,
+  normalizeSettings,
   preservedSafeHtmlTags,
   sanitizeSchema,
   type Settings,
@@ -120,6 +120,25 @@ function rehypeDropEmptyProperties() {
           node.properties[key] = filtered;
         }
       }
+    });
+  };
+}
+
+function shouldPreserveTitleAttribute(node: any, linkTitleStyle: Settings['linkTitleStyle']): boolean {
+  const title = node.properties?.title;
+  if (typeof title !== 'string') return false;
+  if (linkTitleStyle === 'remove-all') return false;
+  if (linkTitleStyle === 'preserve-all') return true;
+  if (node.tagName !== 'a' || typeof node.properties?.href !== 'string') return false;
+  if (linkTitleStyle === 'preserve-links') return true;
+  return title !== node.properties.href;
+}
+
+function rehypeFilterTitleAttributes(linkTitleStyle: Settings['linkTitleStyle']) {
+  return (tree: any) => {
+    visit(tree, 'element', (node: any) => {
+      if (shouldPreserveTitleAttribute(node, linkTitleStyle)) return;
+      delete node.properties?.title;
     });
   };
 }
@@ -679,7 +698,7 @@ export async function htmlToMarkdown(
   html: string,
   settings?: Partial<Settings>,
 ): Promise<string> {
-  const resolvedSettings: Settings = { ...defaultSettings, ...settings };
+  const resolvedSettings: Settings = normalizeSettings(settings);
 
   const processor = unified()
     .use(rehypeParse)
@@ -692,6 +711,7 @@ export async function htmlToMarkdown(
     .use(rehypeSanitize, sanitizeSchema)
     .use(rehypeDropIdAndClass)
     .use(rehypeDropDirWithoutLang)
+    .use(rehypeFilterTitleAttributes, resolvedSettings.linkTitleStyle)
     .use(rehypeDropEmptyProperties)
     .use(rehypeNormalizeTableCellSpans)
     .use(rehypeUnwrapTransparentWrappers)

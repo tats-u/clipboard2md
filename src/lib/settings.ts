@@ -1,10 +1,16 @@
 import { defaultSchema } from 'rehype-sanitize';
 
+export type LinkTitleStyle =
+  | 'remove-all'
+  | 'remove-matching-url'
+  | 'preserve-links'
+  | 'preserve-all';
+
 export interface Settings {
   listMarker: '-' | '*' | '+';
   brStyle: 'backslash' | 'spaces' | 'newline';
   hrStyle: '*' | '-' | '_';
-  linkTitleStyle: 'remove-all' | 'remove-matching-url' | 'preserve';
+  linkTitleStyle: LinkTitleStyle;
   imageStyle: 'preserve-size' | 'markdown' | 'placeholder';
   stripLinks: boolean;
   strictCommonMark: boolean;
@@ -21,6 +27,28 @@ export const defaultSettings: Settings = {
   strictCommonMark: true,
   allowRawHtml: true,
 };
+
+export function normalizeLinkTitleStyle(value: unknown): LinkTitleStyle {
+  switch (value) {
+    case 'remove-all':
+    case 'remove-matching-url':
+    case 'preserve-links':
+    case 'preserve-all':
+      return value;
+    case 'preserve':
+      return 'preserve-links';
+    default:
+      return defaultSettings.linkTitleStyle;
+  }
+}
+
+export function normalizeSettings(settings?: Partial<Settings> | null): Settings {
+  return {
+    ...defaultSettings,
+    ...settings,
+    linkTitleStyle: normalizeLinkTitleStyle(settings?.linkTitleStyle),
+  };
+}
 
 export const preservedSafeHtmlTags = [
   'b',
