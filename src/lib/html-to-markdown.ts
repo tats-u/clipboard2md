@@ -132,13 +132,20 @@ function rehypeDropEmptyProperties() {
 function shouldPreserveTitleAttribute(node: TitleBearingElement, titleStyle: Settings['titleStyle']): boolean {
   const title = node.properties?.title;
   if (typeof title !== 'string') return false;
-  if (titleStyle === 'remove-all') return false;
   const href = node.properties?.href;
   const isLink = node.tagName === 'a' && typeof href === 'string';
   // preserve-links applies only to actual links; all other elements lose title unless preserve-all is set.
   if (!isLink) return titleStyle === 'preserve-all';
-  if (titleStyle === 'preserve-all' || titleStyle === 'preserve-links') return true;
-  return title !== href;
+
+  switch (titleStyle) {
+    case 'remove-all':
+      return false;
+    case 'remove-matching-url':
+      return title !== href;
+    case 'preserve-links':
+    case 'preserve-all':
+      return true;
+  }
 }
 
 function rehypeFilterTitleAttributes(titleStyle: Settings['titleStyle']) {

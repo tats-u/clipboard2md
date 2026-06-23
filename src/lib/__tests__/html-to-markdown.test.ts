@@ -285,6 +285,17 @@ em {
       expect(md).not.toContain('height=');
     });
 
+    it('strips image titles when configured to keep link titles only', async () => {
+      const html = '<p><img src="https://example.com/cat.png" alt="Cat" title="Sleepy" width="320" height="180"></p>';
+      const md = await htmlToMarkdown(html, {
+        imageStyle: 'markdown',
+        titleStyle: 'preserve-links',
+      });
+
+      expect(md.trim()).toBe('![Cat](https://example.com/cat.png)');
+      expect(md).not.toContain('"Sleepy"');
+    });
+
     it('keeps image titles only when configured to preserve all titles', async () => {
       const html = '<p><img src="https://example.com/cat.png" alt="Cat" title="Sleepy" width="320" height="180"></p>';
       const md = await htmlToMarkdown(html, {
