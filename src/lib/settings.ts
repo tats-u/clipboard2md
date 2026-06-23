@@ -1,10 +1,16 @@
 import { defaultSchema } from 'rehype-sanitize';
 
+export type TitleStyle =
+  | 'remove-all'
+  | 'remove-matching-url'
+  | 'preserve-links'
+  | 'preserve-all';
+
 export interface Settings {
   listMarker: '-' | '*' | '+';
   brStyle: 'backslash' | 'spaces' | 'newline';
   hrStyle: '*' | '-' | '_';
-  linkTitleStyle: 'remove-all' | 'remove-matching-url' | 'preserve';
+  titleStyle: TitleStyle;
   imageStyle: 'preserve-size' | 'markdown' | 'placeholder';
   stripLinks: boolean;
   strictCommonMark: boolean;
@@ -15,12 +21,39 @@ export const defaultSettings: Settings = {
   listMarker: '-',
   brStyle: 'backslash',
   hrStyle: '*',
-  linkTitleStyle: 'remove-matching-url',
+  titleStyle: 'remove-matching-url',
   imageStyle: 'preserve-size',
   stripLinks: false,
   strictCommonMark: true,
   allowRawHtml: true,
 };
+
+interface LegacySettings extends Partial<Settings> {
+  linkTitleStyle?: unknown;
+}
+
+export function normalizeTitleStyle(value: unknown): TitleStyle {
+  switch (value) {
+    case 'remove-all':
+    case 'remove-matching-url':
+    case 'preserve-links':
+    case 'preserve-all':
+      return value;
+    case 'preserve':
+      return 'preserve-links';
+    default:
+      return defaultSettings.titleStyle;
+  }
+}
+
+export function normalizeSettings(settings?: LegacySettings | null): Settings {
+  const { linkTitleStyle, ...nextSettings } = settings ?? {};
+  return {
+    ...defaultSettings,
+    ...nextSettings,
+    titleStyle: normalizeTitleStyle(nextSettings.titleStyle ?? linkTitleStyle),
+  };
+}
 
 export const preservedSafeHtmlTags = [
   'b',

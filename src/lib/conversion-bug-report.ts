@@ -32,7 +32,7 @@ function formatSettings(settings: Settings): string {
     `- listMarker: ${settings.listMarker}`,
     `- brStyle: ${settings.brStyle}`,
     `- hrStyle: ${settings.hrStyle}`,
-    `- linkTitleStyle: ${settings.linkTitleStyle}`,
+    `- titleStyle: ${settings.titleStyle}`,
     `- imageStyle: ${settings.imageStyle}`,
     `- stripLinks: ${settings.stripLinks}`,
     `- strictCommonMark: ${settings.strictCommonMark}`,

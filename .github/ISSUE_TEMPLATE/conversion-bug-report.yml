@@ -52,7 +52,7 @@ body:
         - listMarker: -
         - brStyle: backslash
         - hrStyle: *
-        - linkTitleStyle: remove-matching-url
+        - titleStyle: remove-matching-url
         - stripLinks: false
         - strictCommonMark: true
         - allowRawHtml: true

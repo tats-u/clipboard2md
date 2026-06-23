@@ -157,7 +157,7 @@ em {
 
     it('keeps markdown link syntax when the link title must be preserved', async () => {
       const html = '<a href="https://example.com" title="Example">https://example.com</a>';
-      const md = await htmlToMarkdown(html, { linkTitleStyle: 'preserve' });
+      const md = await htmlToMarkdown(html, { titleStyle: 'preserve-links' });
       expect(md.trim()).toBe('[https://example.com](https://example.com "Example")');
     });
 
@@ -195,7 +195,7 @@ em {
 
     it('removes all link titles when configured', async () => {
       const html = '<a href="https://example.com" title="Example">click here</a>';
-      const md = await htmlToMarkdown(html, { linkTitleStyle: 'remove-all' });
+      const md = await htmlToMarkdown(html, { titleStyle: 'remove-all' });
       expect(md.trim()).toBe('[click here](https://example.com)');
     });
 
@@ -221,8 +221,20 @@ em {
 
     it('keeps matching link titles when configured not to strip them', async () => {
       const html = '<a href="http://example.com/" title="http://example.com/">http://example.com/</a>';
-      const md = await htmlToMarkdown(html, { linkTitleStyle: 'preserve' });
+      const md = await htmlToMarkdown(html, { titleStyle: 'preserve-links' });
       expect(md.trim()).toBe('[http://example.com/](http://example.com/ "http://example.com/")');
+    });
+
+    it('removes non-link titles by default', async () => {
+      const html = '<p><q title="Greeting">Hello</q></p>';
+      const md = await htmlToMarkdown(html, { allowRawHtml: true });
+      expect(md.trim()).toBe('<q>Hello</q>');
+    });
+
+    it('keeps non-link titles when configured to preserve all titles', async () => {
+      const html = '<p><q title="Greeting">Hello</q></p>';
+      const md = await htmlToMarkdown(html, { allowRawHtml: true, titleStyle: 'preserve-all' });
+      expect(md.trim()).toBe('<q title="Greeting">Hello</q>');
     });
 
     it('outputs plain text for anchor without href', async () => {
@@ -266,10 +278,32 @@ em {
       const html = '<p><img src="https://example.com/cat.png" alt="Cat" title="Sleepy" width="320" height="180"></p>';
       const md = await htmlToMarkdown(html, { imageStyle: 'markdown' });
 
-      expect(md.trim()).toBe('![Cat](https://example.com/cat.png "Sleepy")');
+      expect(md.trim()).toBe('![Cat](https://example.com/cat.png)');
+      expect(md).not.toContain('"Sleepy"');
       expect(md).not.toContain('<img');
       expect(md).not.toContain('width=');
       expect(md).not.toContain('height=');
+    });
+
+    it('strips image titles when configured to keep link titles only', async () => {
+      const html = '<p><img src="https://example.com/cat.png" alt="Cat" title="Sleepy" width="320" height="180"></p>';
+      const md = await htmlToMarkdown(html, {
+        imageStyle: 'markdown',
+        titleStyle: 'preserve-links',
+      });
+
+      expect(md.trim()).toBe('![Cat](https://example.com/cat.png)');
+      expect(md).not.toContain('"Sleepy"');
+    });
+
+    it('keeps image titles only when configured to preserve all titles', async () => {
+      const html = '<p><img src="https://example.com/cat.png" alt="Cat" title="Sleepy" width="320" height="180"></p>';
+      const md = await htmlToMarkdown(html, {
+        imageStyle: 'markdown',
+        titleStyle: 'preserve-all',
+      });
+
+      expect(md.trim()).toBe('![Cat](https://example.com/cat.png "Sleepy")');
     });
 
     it('replaces images with placeholder text that includes alt text when configured', async () => {

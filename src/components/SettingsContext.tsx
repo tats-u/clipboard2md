@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
-import { type Settings, defaultSettings } from '../lib/settings';
+import { type Settings, defaultSettings, normalizeSettings } from '../lib/settings';
 
 interface SettingsContextType {
   settings: Settings;
@@ -16,7 +16,7 @@ const SettingsContext = createContext<SettingsContextType>({
 function loadSettings(): Settings {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) return { ...defaultSettings, ...JSON.parse(stored) };
+    if (stored) return normalizeSettings(JSON.parse(stored));
   } catch {}
   return defaultSettings;
 }
@@ -26,7 +26,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
   const updateSettings = useCallback((updates: Partial<Settings>) => {
     setSettings(prev => {
-      const next = { ...prev, ...updates };
+      const next = normalizeSettings({ ...prev, ...updates });
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)); } catch {}
       return next;
     });
