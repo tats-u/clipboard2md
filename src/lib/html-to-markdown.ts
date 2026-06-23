@@ -129,21 +129,21 @@ function rehypeDropEmptyProperties() {
   };
 }
 
-function shouldPreserveTitleAttribute(node: TitleBearingElement, linkTitleStyle: Settings['linkTitleStyle']): boolean {
+function shouldPreserveTitleAttribute(node: TitleBearingElement, titleStyle: Settings['titleStyle']): boolean {
   const title = node.properties?.title;
   if (typeof title !== 'string') return false;
-  if (linkTitleStyle === 'remove-all') return false;
+  if (titleStyle === 'remove-all') return false;
   const href = node.properties?.href;
   const isLink = node.tagName === 'a' && typeof href === 'string';
-  if (!isLink) return linkTitleStyle === 'preserve-all';
-  if (linkTitleStyle === 'preserve-all' || linkTitleStyle === 'preserve-links') return true;
+  if (!isLink) return titleStyle === 'preserve-all';
+  if (titleStyle === 'preserve-all' || titleStyle === 'preserve-links') return true;
   return title !== href;
 }
 
-function rehypeFilterTitleAttributes(linkTitleStyle: Settings['linkTitleStyle']) {
+function rehypeFilterTitleAttributes(titleStyle: Settings['titleStyle']) {
   return (tree: unknown) => {
     visit(tree as any, 'element', (node: TitleBearingElement) => {
-      if (shouldPreserveTitleAttribute(node, linkTitleStyle)) return;
+      if (shouldPreserveTitleAttribute(node, titleStyle)) return;
       delete node.properties?.title;
     });
   };
@@ -460,18 +460,18 @@ function remarkStripLinks() {
 
 function getEffectiveLinkTitle(
   node: any,
-  linkTitleStyle: Settings['linkTitleStyle'],
+  titleStyle: Settings['titleStyle'],
 ): string | null {
-  if (linkTitleStyle === 'remove-all') return null;
-  if (linkTitleStyle === 'remove-matching-url' && node.title === node.url) return null;
+  if (titleStyle === 'remove-all') return null;
+  if (titleStyle === 'remove-matching-url' && node.title === node.url) return null;
   return typeof node.title === 'string' ? node.title : null;
 }
 
 function getLinkNodeForMarkdown(
   node: any,
-  linkTitleStyle: Settings['linkTitleStyle'],
+  titleStyle: Settings['titleStyle'],
 ) {
-  const effectiveTitle = getEffectiveLinkTitle(node, linkTitleStyle);
+  const effectiveTitle = getEffectiveLinkTitle(node, titleStyle);
   if (
     effectiveTitle === node.title ||
     (effectiveTitle === null && (node.title === null || node.title === undefined))
@@ -484,9 +484,9 @@ function getLinkNodeForMarkdown(
 
 function getBareAutolinkLiteral(
   node: any,
-  linkTitleStyle: Settings['linkTitleStyle'],
+  titleStyle: Settings['titleStyle'],
 ): string | null {
-  if (getEffectiveLinkTitle(node, linkTitleStyle)) return null;
+  if (getEffectiveLinkTitle(node, titleStyle)) return null;
   if (node.children.length === 0) return null;
   if (node.children.some((child: any) => child.type !== 'text')) return null;
 
@@ -507,25 +507,25 @@ function getBareAutolinkLiteral(
   return null;
 }
 
-function createLinkHandler(linkTitleStyle: Settings['linkTitleStyle']) {
+function createLinkHandler(titleStyle: Settings['titleStyle']) {
   const defaultLinkHandler = mdastToMarkdownHandlers.link;
 
   const handler = (node: any, _parent: any, state: any, info: any) => {
-    const bareAutolink = getBareAutolinkLiteral(node, linkTitleStyle);
+    const bareAutolink = getBareAutolinkLiteral(node, titleStyle);
     if (bareAutolink) {
       return bareAutolink;
     }
 
-    return defaultLinkHandler(getLinkNodeForMarkdown(node, linkTitleStyle), _parent, state, info);
+    return defaultLinkHandler(getLinkNodeForMarkdown(node, titleStyle), _parent, state, info);
   };
 
   handler.peek = (node: any, _parent: any, state: any) => {
-    const bareAutolink = getBareAutolinkLiteral(node, linkTitleStyle);
+    const bareAutolink = getBareAutolinkLiteral(node, titleStyle);
     if (bareAutolink) {
       return bareAutolink.charAt(0);
     }
 
-    return defaultLinkHandler.peek(getLinkNodeForMarkdown(node, linkTitleStyle), _parent, state);
+    return defaultLinkHandler.peek(getLinkNodeForMarkdown(node, titleStyle), _parent, state);
   };
 
   return handler;
@@ -717,7 +717,7 @@ export async function htmlToMarkdown(
     .use(rehypeSanitize, sanitizeSchema)
     .use(rehypeDropIdAndClass)
     .use(rehypeDropDirWithoutLang)
-    .use(rehypeFilterTitleAttributes, resolvedSettings.linkTitleStyle)
+    .use(rehypeFilterTitleAttributes, resolvedSettings.titleStyle)
     .use(rehypeDropEmptyProperties)
     .use(rehypeNormalizeTableCellSpans)
     .use(rehypeUnwrapTransparentWrappers)
@@ -743,7 +743,7 @@ export async function htmlToMarkdown(
       setext: false,
       handlers: {
         break: createBreakHandler(resolvedSettings.brStyle),
-        link: createLinkHandler(resolvedSettings.linkTitleStyle),
+        link: createLinkHandler(resolvedSettings.titleStyle),
       },
     })
     .process(html);
