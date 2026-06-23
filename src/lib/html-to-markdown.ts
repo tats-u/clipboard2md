@@ -17,6 +17,11 @@ import {
   type Settings,
 } from './settings';
 
+interface TitleBearingElement {
+  tagName: string;
+  properties?: Record<string, unknown>;
+}
+
 function rehypeRemoveComments() {
   return (tree: any) => {
     const walk = (node: any) => {
@@ -124,19 +129,20 @@ function rehypeDropEmptyProperties() {
   };
 }
 
-function shouldPreserveTitleAttribute(node: any, linkTitleStyle: Settings['linkTitleStyle']): boolean {
+function shouldPreserveTitleAttribute(node: TitleBearingElement, linkTitleStyle: Settings['linkTitleStyle']): boolean {
   const title = node.properties?.title;
   if (typeof title !== 'string') return false;
   if (linkTitleStyle === 'remove-all') return false;
-  if (linkTitleStyle === 'preserve-all') return true;
-  if (node.tagName !== 'a' || typeof node.properties?.href !== 'string') return false;
-  if (linkTitleStyle === 'preserve-links') return true;
-  return title !== node.properties.href;
+  const href = node.properties?.href;
+  const isLink = node.tagName === 'a' && typeof href === 'string';
+  if (!isLink) return linkTitleStyle === 'preserve-all';
+  if (linkTitleStyle === 'preserve-all' || linkTitleStyle === 'preserve-links') return true;
+  return title !== href;
 }
 
 function rehypeFilterTitleAttributes(linkTitleStyle: Settings['linkTitleStyle']) {
-  return (tree: any) => {
-    visit(tree, 'element', (node: any) => {
+  return (tree: unknown) => {
+    visit(tree as any, 'element', (node: TitleBearingElement) => {
       if (shouldPreserveTitleAttribute(node, linkTitleStyle)) return;
       delete node.properties?.title;
     });
