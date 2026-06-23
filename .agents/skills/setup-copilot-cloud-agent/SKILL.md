@@ -1,6 +1,6 @@
 ---
 name: setup-copilot-cloud-agent
-description: Must read before setting up the environment in GitHub-Hosted runners for Copilot Cloud Agent. Ignore in the other environments.
+description: Must read before setting up the environment in GitHub-Hosted runners for Copilot Cloud Agent especially if you're considering using Corepack. Ignore in the other environments.
 user-invocable: false
 ---
 
