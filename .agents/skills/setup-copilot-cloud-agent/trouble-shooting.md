@@ -4,7 +4,7 @@ If the installation fails, the requester may have forgotten to allow required do
 
 | Failing command | Error message | Domain forgotten to allow by the requester |
 | --- | --- | --- |
-| 1st command | (Mentioning `moonrepo.dev`) | `moonrepo.dev` |
+| 1st command | `curl: (6) Could not resolve host: moonrepo.dev` | `moonrepo.dev` |
 | 2nd command | Error: proto::resolve::offline::version_required / Internet connection required to load and resolve a valid version. | `detectportal.firefox.com` |
 
 ## Errors caused by outdated tools
