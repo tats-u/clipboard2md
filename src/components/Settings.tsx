@@ -112,7 +112,7 @@ export default function SettingsPanel() {
             <div className="flex flex-col gap-2">
               {([
                 { value: 'remove-all', label: 'Strip all titles' },
-                { value: 'remove-matching-url', label: 'Keep non-URL link titles only' },
+                { value: 'remove-matching-url', label: 'Keep link titles except matching URLs' },
                 { value: 'preserve-links', label: 'Keep link titles' },
                 { value: 'preserve-all', label: 'Keep all titles' },
               ] as const).map(({ value, label }) => (

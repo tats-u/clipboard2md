@@ -135,6 +135,7 @@ function shouldPreserveTitleAttribute(node: TitleBearingElement, titleStyle: Set
   if (titleStyle === 'remove-all') return false;
   const href = node.properties?.href;
   const isLink = node.tagName === 'a' && typeof href === 'string';
+  // preserve-links applies only to actual links; all other elements lose title unless preserve-all is set.
   if (!isLink) return titleStyle === 'preserve-all';
   if (titleStyle === 'preserve-all' || titleStyle === 'preserve-links') return true;
   return title !== href;
@@ -462,9 +463,16 @@ function getEffectiveLinkTitle(
   node: any,
   titleStyle: Settings['titleStyle'],
 ): string | null {
-  if (titleStyle === 'remove-all') return null;
-  if (titleStyle === 'remove-matching-url' && node.title === node.url) return null;
-  return typeof node.title === 'string' ? node.title : null;
+  switch (titleStyle) {
+    case 'remove-all':
+      return null;
+    case 'remove-matching-url':
+      if (node.title === node.url) return null;
+      return typeof node.title === 'string' ? node.title : null;
+    case 'preserve-links':
+    case 'preserve-all':
+      return typeof node.title === 'string' ? node.title : null;
+  }
 }
 
 function getLinkNodeForMarkdown(
