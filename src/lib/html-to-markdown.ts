@@ -881,6 +881,7 @@ function createRehypeRemarkHandlers(settings: Settings) {
     pre: createPreHandler(),
     table: createTableHandler(settings.allowRawHtml),
   } as Record<string, any>;
+  const markdownContainerHandlerTags = new Set(['dd', 'details', 'dl']);
   const tagNames = new Set([...Object.keys(handlers), ...preservedTagsSet]);
 
   return Object.fromEntries(
@@ -888,7 +889,9 @@ function createRehypeRemarkHandlers(settings: Settings) {
       tagName,
       (state: any, node: any, parent: any) => {
         const preserveNodeAsRawHtml =
-          tagName === 'img'
+          markdownContainerHandlerTags.has(tagName)
+            ? false
+            : tagName === 'img'
             ? settings.imageStyle === 'preserve-size' &&
               shouldPreserveRawHtml(node, settings.allowRawHtml)
             : shouldPreserveRawHtml(node, settings.allowRawHtml);
