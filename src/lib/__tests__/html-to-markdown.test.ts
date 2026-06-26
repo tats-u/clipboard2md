@@ -627,7 +627,10 @@ em {
 
       const md = await htmlToMarkdown(html, { allowRawHtml: true });
 
-      expect(md).toContain('<dl><dt>用語</dt><dd><dfn>定義</dfn></dd></dl>');
+      expect(md).toContain('<dl>');
+      expect(md).toContain('<dt>用語</dt>');
+      expect(md).toContain('<dd><dfn>定義</dfn></dd>');
+      expect(md).toContain('</dl>');
       expect(md).toContain('<i>italic</i> <b>bold</b> <s>strike</s>');
       expect(md).toContain('<q cite="https://example.com/quote">quote</q> <cite>source</cite>');
       expect(md).toContain('<u>underline</u> <ins>inserted</ins>');

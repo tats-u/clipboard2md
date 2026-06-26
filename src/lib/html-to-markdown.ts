@@ -55,7 +55,7 @@ function rehypeDropDirWithoutLang() {
   };
 }
 
-function rehypeDropDetailsOpenAttribute() {
+function rehypeRemoveDetailsOpen() {
   return (tree: any) => {
     visit(tree, 'element', (node: any) => {
       if (node.tagName !== 'details') return;
@@ -677,7 +677,7 @@ const markdownConvertibleBlockTags = new Set([
 ]);
 
 function isWhitespaceOnlyTextNode(node: any): boolean {
-    return node?.type === 'text' && !/\S/.test(node.value ?? '');
+    return node?.type === 'text' && /^\s*$/.test(node.value ?? '');
 }
 
 function getMeaningfulHastChildren(node: any): any[] {
@@ -801,13 +801,13 @@ function stringifyMarkdownChildren(children: any[], settings: Settings): string 
   return String(processor.stringify(tree)).trim();
 }
 
-function renderHtmlContainerWithMarkdownChildren(
+function formatHtmlContainerWithMarkdownChildren(
   state: any,
   node: any,
   settings: Settings,
   bodyChildren: any[],
   prefixLines: string[] = [],
-) {
+): string {
   const markdown = stringifyMarkdownChildren(
     state.all({ type: 'element', children: bodyChildren }),
     settings,
@@ -819,17 +819,34 @@ function renderHtmlContainerWithMarkdownChildren(
   }
 
   lines.push(`</${node.tagName}>`);
-  return createHtmlNode(state, node, lines.join('\n'));
+  return lines.join('\n');
+}
+
+function renderHtmlContainerWithMarkdownChildren(
+  state: any,
+  node: any,
+  settings: Settings,
+  bodyChildren: any[],
+  prefixLines: string[] = [],
+) {
+  return createHtmlNode(
+    state,
+    node,
+    formatHtmlContainerWithMarkdownChildren(state, node, settings, bodyChildren, prefixLines),
+  );
+}
+
+function createDefinitionDescriptionHtml(state: any, node: any, settings: Settings): string {
+  if (!hasMarkdownConvertibleDefinitionDescriptionContent(node)) {
+    return toHtml(node, { allowDangerousHtml: true });
+  }
+
+  return formatHtmlContainerWithMarkdownChildren(state, node, settings, node.children ?? []);
 }
 
 function createDefinitionDescriptionHandler(settings: Settings) {
-  return (state: any, node: any) => {
-    if (!hasMarkdownConvertibleDefinitionDescriptionContent(node)) {
-      return createRawHtmlNode(state, node);
-    }
-
-    return renderHtmlContainerWithMarkdownChildren(state, node, settings, node.children ?? []);
-  };
+  return (state: any, node: any) =>
+    createHtmlNode(state, node, createDefinitionDescriptionHtml(state, node, settings));
 }
 
 function createDefinitionListHandler(settings: Settings) {
@@ -842,9 +859,7 @@ function createDefinitionListHandler(settings: Settings) {
 
     for (const child of getMeaningfulHastChildren(node)) {
       if (child.tagName === 'dd' && hasMarkdownConvertibleDefinitionDescriptionContent(child)) {
-        lines.push(
-          stringifyMarkdownChildren([createDefinitionDescriptionHandler(settings)(state, child)], settings),
-        );
+        lines.push(createDefinitionDescriptionHtml(state, child, settings));
         continue;
       }
 
@@ -922,7 +937,7 @@ export async function htmlToMarkdown(
     .use(rehypeAnnotateCodeBlockLanguage)
     .use(rehypeUnwrapHeadingSelfLinks)
     .use(rehypeSanitize, sanitizeSchema)
-    .use(rehypeDropDetailsOpenAttribute)
+    .use(rehypeRemoveDetailsOpen)
     .use(rehypeDropIdAndClass)
     .use(rehypeDropDirWithoutLang)
     .use(rehypeFilterTitleAttributes, resolvedSettings.titleStyle)
