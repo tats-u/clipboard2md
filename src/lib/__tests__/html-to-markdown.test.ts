@@ -632,6 +632,39 @@ em {
       expect(md).toContain('<q cite="https://example.com/quote">quote</q> <cite>source</cite>');
       expect(md).toContain('<u>underline</u> <ins>inserted</ins>');
     });
+
+    it('converts block-only children inside preserved HTML wrappers into markdown blocks', async () => {
+      const html = [
+        '<dl>',
+        '  <dt>dt</dt>',
+        '  <dd>',
+        '    <p>dd p1</p>',
+        '    <p>dd p2</p>',
+        '    <p>dd p3 <strong>strong</strong> <em>em</em> <a href="https://example.com/">a</a> <img src="data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==" alt="1px"></p>',
+        '  </dd>',
+        '  <dt>dt2</dt>',
+        '  <dd>dd2</dd>',
+        '  <dt>dt3</dt>',
+        '  <dd><p>dd3 p</p><pre class="language-bash"><code>echo pre code</code></pre></dd>',
+        '</dl>',
+        '',
+        '<details open>',
+        '  <summary>summary</summary>',
+        '  <p>details p1</p>',
+        '  <p>details p2</p>',
+        '</details>',
+      ].join('\n');
+
+      const md = await htmlToMarkdown(html);
+
+      expect(md).toBe(
+        '<dl>\n<dt>dt</dt>\n<dd>\n\ndd p1\n\ndd p2\n\ndd p3 **strong** *em* [a](https://example.com/) ![1px](data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==)\n\n</dd>\n<dt>dt2</dt>\n<dd>dd2</dd>\n<dt>dt3</dt>\n<dd>\n\ndd3 p\n\n```bash\necho pre code\n```\n\n</dd>\n</dl>\n\n<details>\n<summary>summary</summary>\n\ndetails p1\n\ndetails p2\n\n</details>\n',
+      );
+      expect(md).not.toContain('<details open>');
+      expect(md).not.toContain('<p>dd p1</p>');
+      expect(md).not.toContain('<pre class="language-bash">');
+      expect(md).toContain('```bash\necho pre code\n```');
+    });
   });
 
   describe('tabindex anchor removal', () => {
