@@ -55,6 +55,15 @@ function rehypeDropDirWithoutLang() {
   };
 }
 
+function rehypeRemoveDetailsOpen() {
+  return (tree: any) => {
+    visit(tree, 'element', (node: any) => {
+      if (node.tagName !== 'details') return;
+      delete node.properties?.open;
+    });
+  };
+}
+
 function normalizeHeadingLevel(value: unknown): number | null {
   const normalized =
     typeof value === 'number'
@@ -641,6 +650,75 @@ function createImageHandler(settings: Settings) {
   };
 }
 
+const markdownConvertibleBlockTags = new Set([
+    'address',
+    'aside',
+    'blockquote',
+    'div',
+    'figure',
+    'figcaption',
+    'footer',
+    'h1',
+    'h2',
+    'h3',
+    'h4',
+    'h5',
+    'h6',
+    'header',
+    'hr',
+    'main',
+    'nav',
+    'ol',
+    'p',
+    'pre',
+    'section',
+    'table',
+    'ul',
+]);
+
+function isWhitespaceOnlyTextNode(node: any): boolean {
+    return node?.type === 'text' && /^\s*$/.test(node.value ?? '');
+}
+
+function getMeaningfulHastChildren(node: any): any[] {
+    return (node.children ?? []).filter((child: any) => !isWhitespaceOnlyTextNode(child));
+}
+
+function canConvertElementToMarkdownBlock(node: any): boolean {
+    if (node?.type !== 'element') return false;
+    if (node.tagName === 'details') return hasMarkdownConvertibleDetailsContent(node);
+    if (node.tagName === 'dl') return hasDefinitionListStructure(node);
+    if (node.tagName === 'dd') return hasMarkdownConvertibleDefinitionDescriptionContent(node);
+    return markdownConvertibleBlockTags.has(node.tagName);
+}
+
+function hasMarkdownConvertibleDefinitionDescriptionContent(node: any): boolean {
+    const children = getMeaningfulHastChildren(node);
+    return children.length > 0 && children.every(canConvertElementToMarkdownBlock);
+}
+
+function hasDefinitionListStructure(node: any): boolean {
+    const children = getMeaningfulHastChildren(node);
+    return (
+      children.length > 0 &&
+      children.every((child: any) => child.type === 'element' && (child.tagName === 'dt' || child.tagName === 'dd'))
+    );
+}
+
+function getDetailsSummaryChild(node: any): any | null {
+    const children = getMeaningfulHastChildren(node);
+    const firstChild = children[0];
+    return firstChild?.type === 'element' && firstChild.tagName === 'summary' ? firstChild : null;
+}
+
+function hasMarkdownConvertibleDetailsContent(node: any): boolean {
+    const children = getMeaningfulHastChildren(node);
+    if (children.length === 0) return true;
+    const summary = getDetailsSummaryChild(node);
+    const bodyChildren = summary ? children.slice(1) : children;
+    return bodyChildren.every(canConvertElementToMarkdownBlock);
+}
+
 const preservedTagsSet = new Set<string>(preservedSafeHtmlTags);
 const markdownCompatibleAttributeNames = new Map<string, Set<string>>([
   ['a', new Set(['href', 'title'])],
@@ -669,13 +747,23 @@ function hasOnlyMarkdownCompatibleAttributes(node: any): boolean {
   return propertyNames.every((propertyName) => allowedAttributes.has(propertyName));
 }
 
-function createRawHtmlNode(state: any, node: any) {
+function createHtmlNode(state: any, node: any, value: string) {
   const result = {
     type: 'html',
-    value: toHtml(node, { allowDangerousHtml: true }),
+    value,
   };
   state.patch(node, result);
   return result;
+}
+
+function createRawHtmlNode(state: any, node: any) {
+  return createHtmlNode(state, node, toHtml(node, { allowDangerousHtml: true }));
+}
+
+function getOpeningHtmlTag(node: any): string {
+  const value = toHtml({ ...node, children: [] }, { allowDangerousHtml: true });
+  const closingTag = `</${node.tagName}>`;
+  return value.endsWith(closingTag) ? value.slice(0, -closingTag.length) : value;
 }
 
 function shouldPreserveRawHtml(node: any, allowRawHtml: boolean): boolean {
@@ -685,13 +773,130 @@ function shouldPreserveRawHtml(node: any, allowRawHtml: boolean): boolean {
   return hasSignificantPropertyValues(node);
 }
 
+function stringifyMarkdownChildren(children: any[], settings: Settings): string {
+  const processor = unified()
+    .use(remarkUnwrapEmptyPhrasingContainers)
+    .use(remarkRemoveEmptyParagraphs)
+    .use(remarkGfm);
+
+  if (settings.stripLinks) {
+    processor.use(remarkStripLinks);
+  }
+
+  if (!settings.strictCommonMark) {
+    processor.use(remarkCjkFriendly).use(remarkCjkFriendlyGfmStrikethrough);
+  }
+
+  processor.use(remarkStringify, {
+    bullet: settings.listMarker,
+    rule: settings.hrStyle,
+    setext: false,
+    handlers: {
+      break: createBreakHandler(settings.brStyle),
+      link: createLinkHandler(settings.titleStyle),
+    },
+  });
+
+  const tree = processor.runSync({ type: 'root', children } as any);
+  return String(processor.stringify(tree)).trim();
+}
+
+function formatHtmlContainerWithMarkdownChildren(
+  state: any,
+  node: any,
+  settings: Settings,
+  bodyChildren: any[],
+  prefixLines: string[] = [],
+): string {
+  const markdown = stringifyMarkdownChildren(
+    state.all({ type: 'element', children: bodyChildren }),
+    settings,
+  );
+  const lines = [getOpeningHtmlTag(node), ...prefixLines];
+
+  if (markdown.length > 0) {
+    lines.push('', markdown, '');
+  }
+
+  lines.push(`</${node.tagName}>`);
+  return lines.join('\n');
+}
+
+function renderHtmlContainerWithMarkdownChildren(
+  state: any,
+  node: any,
+  settings: Settings,
+  bodyChildren: any[],
+  prefixLines: string[] = [],
+) {
+  return createHtmlNode(
+    state,
+    node,
+    formatHtmlContainerWithMarkdownChildren(state, node, settings, bodyChildren, prefixLines),
+  );
+}
+
+function createDefinitionDescriptionHtml(state: any, node: any, settings: Settings): string {
+  if (!hasMarkdownConvertibleDefinitionDescriptionContent(node)) {
+    return toHtml(node, { allowDangerousHtml: true });
+  }
+
+  return formatHtmlContainerWithMarkdownChildren(state, node, settings, node.children ?? []);
+}
+
+function createDefinitionDescriptionHandler(settings: Settings) {
+  return (state: any, node: any) =>
+    createHtmlNode(state, node, createDefinitionDescriptionHtml(state, node, settings));
+}
+
+function createDefinitionListHandler(settings: Settings) {
+  return (state: any, node: any) => {
+    if (!hasDefinitionListStructure(node)) {
+      return createRawHtmlNode(state, node);
+    }
+
+    const lines = [getOpeningHtmlTag(node)];
+
+    for (const child of getMeaningfulHastChildren(node)) {
+      if (child.tagName === 'dd' && hasMarkdownConvertibleDefinitionDescriptionContent(child)) {
+        lines.push(createDefinitionDescriptionHtml(state, child, settings));
+        continue;
+      }
+
+      lines.push(toHtml(child, { allowDangerousHtml: true }));
+    }
+
+    lines.push(`</${node.tagName}>`);
+    return createHtmlNode(state, node, lines.join('\n'));
+  };
+}
+
+function createDetailsHandler(settings: Settings) {
+  return (state: any, node: any) => {
+    if (!hasMarkdownConvertibleDetailsContent(node)) {
+      return createRawHtmlNode(state, node);
+    }
+
+    const summary = getDetailsSummaryChild(node);
+    const children = getMeaningfulHastChildren(node);
+    const bodyChildren = summary ? children.slice(1) : children;
+    const prefixLines = summary ? [toHtml(summary, { allowDangerousHtml: true })] : [];
+
+    return renderHtmlContainerWithMarkdownChildren(state, node, settings, bodyChildren, prefixLines);
+  };
+}
+
 function createRehypeRemarkHandlers(settings: Settings) {
   const handlers = {
     ...hastToMdastHandlers,
+    dd: createDefinitionDescriptionHandler(settings),
+    details: createDetailsHandler(settings),
+    dl: createDefinitionListHandler(settings),
     img: createImageHandler(settings),
     pre: createPreHandler(),
     table: createTableHandler(settings.allowRawHtml),
   } as Record<string, any>;
+  const markdownContainerHandlerTags = new Set(['dd', 'details', 'dl']);
   const tagNames = new Set([...Object.keys(handlers), ...preservedTagsSet]);
 
   return Object.fromEntries(
@@ -699,7 +904,9 @@ function createRehypeRemarkHandlers(settings: Settings) {
       tagName,
       (state: any, node: any, parent: any) => {
         const preserveNodeAsRawHtml =
-          tagName === 'img'
+          markdownContainerHandlerTags.has(tagName)
+            ? false
+            : tagName === 'img'
             ? settings.imageStyle === 'preserve-size' &&
               shouldPreserveRawHtml(node, settings.allowRawHtml)
             : shouldPreserveRawHtml(node, settings.allowRawHtml);
@@ -730,6 +937,7 @@ export async function htmlToMarkdown(
     .use(rehypeAnnotateCodeBlockLanguage)
     .use(rehypeUnwrapHeadingSelfLinks)
     .use(rehypeSanitize, sanitizeSchema)
+    .use(rehypeRemoveDetailsOpen)
     .use(rehypeDropIdAndClass)
     .use(rehypeDropDirWithoutLang)
     .use(rehypeFilterTitleAttributes, resolvedSettings.titleStyle)

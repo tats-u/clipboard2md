@@ -94,4 +94,8 @@ export const sanitizeSchema = {
       'dir',
     ],
   },
+  protocols: {
+    ...defaultSchema.protocols,
+    src: [...(defaultSchema.protocols?.src || []), 'data'],
+  },
 };
