@@ -182,14 +182,16 @@ function getCodeBlockLanguageFromProperties(node: any): string | null {
   if (dataLang) return dataLang;
 
   const classNames = node.properties?.className;
-  const values = Array.isArray(classNames) ? classNames : typeof classNames === 'string' ? [classNames] : [];
+  const classNameText =
+    typeof classNames === 'string' ? classNames : Array.isArray(classNames) ? classNames.join(' ') : '';
+  const values = Array.isArray(classNames) ? classNames : classNameText ? [classNameText] : [];
 
   for (const value of values) {
     const match = codeBlockLanguageClassPattern.exec(String(value));
     if (match) return normalizeCodeBlockLanguage(match[1]);
   }
 
-  const syntaxHighlighterMatch = syntaxHighlighterBrushPattern.exec(values.map(String).join(' '));
+  const syntaxHighlighterMatch = syntaxHighlighterBrushPattern.exec(classNameText);
   if (syntaxHighlighterMatch) {
     return normalizeCodeBlockLanguage(syntaxHighlighterMatch[1]);
   }
