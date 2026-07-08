@@ -118,6 +118,7 @@ export default function ReportConversionBugButton({ html, markdown }: ReportConv
           className={`flex items-center gap-1.5 px-3 py-1 text-xs rounded border transition-colors duration-200 cursor-pointer ${reportCopied ? 'border-green-500 bg-green-500/10 text-green-400' : 'border-gray-600 text-gray-300 hover:border-accent hover:text-accent copy-breathe'}`}
           aria-haspopup="menu"
           aria-expanded={isMenuOpen}
+          aria-label="Report Issue options"
         >
           {reportCopied ? <CheckIcon size={14} /> : <IssueOpenedIcon size={14} />}
           {reportCopied ? 'Copied Report!' : 'Report Issue'}
