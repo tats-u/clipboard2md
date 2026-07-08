@@ -562,6 +562,30 @@ em {
 
       expect(md.trim()).toBe('```sh\npnpm add -D shiki\n```');
     });
+
+    it('detects SyntaxHighlighter brush classes with optional spaces around colons', async () => {
+      const html = [
+        '<pre class="brush: js notranslate"><code><span class="token function">toBase64</span><span class="token punctuation">(</span><span class="token punctuation">)</span>',
+        '<span class="token function">toBase64</span><span class="token punctuation">(</span>options<span class="token punctuation">)</span>',
+        '</code></pre>',
+        '<pre class="brush : ts ; notranslate"><code>const value = 1;\n</code></pre>',
+      ].join('\n');
+
+      const md = await htmlToMarkdown(html);
+
+      expect(md.trim()).toBe(
+        [
+          '```js',
+          'toBase64()',
+          'toBase64(options)',
+          '```',
+          '',
+          '```ts',
+          'const value = 1;',
+          '```',
+        ].join('\n'),
+      );
+    });
   });
 
   describe('safe HTML preservation', () => {

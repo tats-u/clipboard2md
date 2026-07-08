@@ -167,6 +167,8 @@ function rehypeFilterTitleAttributes(titleStyle: Settings['titleStyle']) {
 }
 
 const codeBlockLanguageClassPattern = /^language-(.+)$/;
+// Mirrors SyntaxHighlighter opts-parser value parsing for `brush: <lang>`, including `#`/`%` tokens.
+const syntaxHighlighterBrushPattern = /\bbrush\s*:\s*([\w%#-]+)\s*;?/;
 
 function normalizeCodeBlockLanguage(value: unknown): string | null {
   if (typeof value !== 'string') return null;
@@ -182,10 +184,16 @@ function getCodeBlockLanguageFromProperties(node: any): string | null {
 
   const classNames = node.properties?.className;
   const values = Array.isArray(classNames) ? classNames : typeof classNames === 'string' ? [classNames] : [];
+  const classNameText = values.join(' ');
 
   for (const value of values) {
     const match = codeBlockLanguageClassPattern.exec(String(value));
     if (match) return normalizeCodeBlockLanguage(match[1]);
+  }
+
+  const syntaxHighlighterMatch = syntaxHighlighterBrushPattern.exec(classNameText);
+  if (syntaxHighlighterMatch) {
+    return normalizeCodeBlockLanguage(syntaxHighlighterMatch[1]);
   }
 
   return null;
