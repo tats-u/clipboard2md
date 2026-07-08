@@ -72,9 +72,9 @@ Expected:
     expect(
       createConversionBugReportClipboardText({
         html: '<pre>```</pre>',
-        markdown: '```md
+        markdown: `\`\`\`md
 value
-```',
+\`\`\``,
       }),
     ).toContain('````md');
   });
