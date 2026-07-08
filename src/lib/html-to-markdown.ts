@@ -182,12 +182,11 @@ function getCodeBlockLanguageFromProperties(node: any): string | null {
   if (dataLang) return dataLang;
 
   const classNames = node.properties?.className;
-  const classNameText =
-    typeof classNames === 'string' ? classNames : Array.isArray(classNames) ? classNames.join(' ') : '';
-  const values = Array.isArray(classNames) ? classNames : classNameText ? [classNameText] : [];
+  const values = Array.isArray(classNames) ? classNames.map(String) : typeof classNames === 'string' ? [classNames] : [];
+  const classNameText = values.join(' ');
 
   for (const value of values) {
-    const match = codeBlockLanguageClassPattern.exec(String(value));
+    const match = codeBlockLanguageClassPattern.exec(value);
     if (match) return normalizeCodeBlockLanguage(match[1]);
   }
 
