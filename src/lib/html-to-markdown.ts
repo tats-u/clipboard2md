@@ -167,6 +167,7 @@ function rehypeFilterTitleAttributes(titleStyle: Settings['titleStyle']) {
 }
 
 const codeBlockLanguageClassPattern = /^language-(.+)$/;
+// Mirrors SyntaxHighlighter opts-parser value token parsing for `brush: <lang>`.
 const syntaxHighlighterBrushPattern = /\bbrush\s*:\s*([\w%#-]+)\s*;?/;
 
 function normalizeCodeBlockLanguage(value: unknown): string | null {
