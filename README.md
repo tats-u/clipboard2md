@@ -13,7 +13,7 @@ A web app that converts HTML from your clipboard into Markdown. Paste any HTML c
 - **Customizable and versatile output** — Adjust the Markdown output style with options for lists, line breaks, and more. Suitable for various use cases like quotations, translations, and AI prompts. The most customizable HTML → Markdown converter on the web.
 - **Battle-tested** — Tested with various real-world HTML content to ensure reliable conversion
 - **Open source and privacy-friendly** — No tracking, no ads, and no data collection. All code is open source and runs entirely in your browser.
-- **Optional bug reporting** — The Report Bug button is entirely optional. If you choose to use it, the HTML input, generated Markdown, and conversion settings are sent to GitHub Issues so you can review them in the issue form before submission.
+- **Optional bug reporting** — The Report Issue menu lets you either open a prefilled GitHub issue or copy a reusable report template with the HTML input and Markdown output for manual editing.
 
 ## Tech Stack
 

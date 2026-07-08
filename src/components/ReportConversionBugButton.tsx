@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CheckIcon, CopyIcon, IssueOpenedIcon } from '@primer/octicons-react';
 import { useSettings } from './SettingsContext';
-import { createConversionBugReportUrls } from '../lib/conversion-bug-report';
+import { createConversionBugReportClipboardText, createConversionBugReportUrls } from '../lib/conversion-bug-report';
 
 interface ReportConversionBugButtonProps {
   html: string;
@@ -10,27 +10,26 @@ interface ReportConversionBugButtonProps {
 
 export default function ReportConversionBugButton({ html, markdown }: ReportConversionBugButtonProps) {
   const { settings } = useSettings();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showManualDialog, setShowManualDialog] = useState(false);
+  const [reportCopied, setReportCopied] = useState(false);
   const [markdownCopied, setMarkdownCopied] = useState(false);
   const [htmlCopied, setHtmlCopied] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
 
   const { directUrl, fallbackUrl, shouldUseFallback } = useMemo(
     () => createConversionBugReportUrls({ html, markdown, settings }),
     [html, markdown, settings],
   );
 
+  const reportClipboardText = useMemo(
+    () => createConversionBugReportClipboardText({ html, markdown }),
+    [html, markdown],
+  );
+
   const openInNewTab = useCallback((url: string) => {
     window.open(url, '_blank', 'noopener,noreferrer');
   }, []);
-
-  const handleReport = useCallback(() => {
-    if (shouldUseFallback) {
-      setShowManualDialog(true);
-      return;
-    }
-
-    openInNewTab(directUrl);
-  }, [directUrl, openInNewTab, shouldUseFallback]);
 
   const copyText = useCallback(async (text: string, onCopied: () => void) => {
     try {
@@ -40,6 +39,25 @@ export default function ReportConversionBugButton({ html, markdown }: ReportConv
       // clipboard write failed silently
     }
   }, []);
+
+  const handleCreateIssue = useCallback(() => {
+    setIsMenuOpen(false);
+
+    if (shouldUseFallback) {
+      setShowManualDialog(true);
+      return;
+    }
+
+    openInNewTab(directUrl);
+  }, [directUrl, openInNewTab, shouldUseFallback]);
+
+  const handleCopyReport = useCallback(() => {
+    setIsMenuOpen(false);
+    void copyText(reportClipboardText, () => {
+      setReportCopied(true);
+      setTimeout(() => setReportCopied(false), 2000);
+    });
+  }, [copyText, reportClipboardText]);
 
   const handleCopyMarkdown = useCallback(() => {
     void copyText(markdown, () => {
@@ -56,6 +74,30 @@ export default function ReportConversionBugButton({ html, markdown }: ReportConv
   }, [copyText, html]);
 
   useEffect(() => {
+    if (!isMenuOpen) return;
+
+    const handleMouseDown = (event: MouseEvent) => {
+      if (!menuRef.current?.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleMouseDown);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('mousedown', handleMouseDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isMenuOpen]);
+
+  useEffect(() => {
     if (!showManualDialog) return;
 
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -70,13 +112,43 @@ export default function ReportConversionBugButton({ html, markdown }: ReportConv
 
   return (
     <>
-      <button
-        onClick={handleReport}
-        className="flex items-center gap-1.5 px-3 py-1 text-xs rounded border transition-colors duration-200 cursor-pointer border-gray-600 text-gray-300 hover:border-accent hover:text-accent copy-breathe"
-      >
-        <IssueOpenedIcon size={14} />
-        Report Bug
-      </button>
+      <div className="relative" ref={menuRef}>
+        <button
+          onClick={() => setIsMenuOpen((open) => !open)}
+          className={`flex items-center gap-1.5 px-3 py-1 text-xs rounded border transition-colors duration-200 cursor-pointer ${reportCopied ? 'border-green-500 bg-green-500/10 text-green-400' : 'border-gray-600 text-gray-300 hover:border-accent hover:text-accent copy-breathe'}`}
+          aria-haspopup="menu"
+          aria-expanded={isMenuOpen}
+          aria-label="Report Issue options"
+        >
+          {reportCopied ? <CheckIcon size={14} /> : <IssueOpenedIcon size={14} />}
+          {reportCopied ? 'Copied Report!' : 'Report Issue'}
+          <span aria-hidden="true" className="text-[10px]">▾</span>
+        </button>
+
+        {isMenuOpen && (
+          <div
+            role="menu"
+            className="absolute right-0 z-40 mt-2 min-w-56 overflow-hidden rounded-lg border border-gray-700 bg-gray-900 py-1 shadow-2xl"
+          >
+            <button
+              onClick={handleCreateIssue}
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-200 transition-colors hover:bg-gray-800 cursor-pointer"
+              role="menuitem"
+            >
+              <IssueOpenedIcon size={14} />
+              Create GitHub Issue
+            </button>
+            <button
+              onClick={handleCopyReport}
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-200 transition-colors hover:bg-gray-800 cursor-pointer"
+              role="menuitem"
+            >
+              <CopyIcon size={14} />
+              Copy Report Template
+            </button>
+          </div>
+        )}
+      </div>
 
       {showManualDialog && (
         <div

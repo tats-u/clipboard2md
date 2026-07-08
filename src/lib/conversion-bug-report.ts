@@ -62,6 +62,25 @@ function buildIssueUrl(fields: ConversionBugReportFields): string {
   return `${ISSUE_URL}?${params.toString()}`;
 }
 
+function getFence(content: string): string {
+  const backtickRuns = content.match(/`+/g) ?? [];
+  const longestRun = backtickRuns.reduce((max, run) => Math.max(max, run.length), 0);
+  return '`'.repeat(Math.max(3, longestRun + 1));
+}
+
+function buildClipboardSection(label: string, language: string, content: string): string {
+  const fence = getFence(content);
+  return `${label}:\n\n${fence}${language}\n${content}\n${fence}`;
+}
+
+export function createConversionBugReportClipboardText({ html, markdown }: Pick<BuildConversionBugReportOptions, 'html' | 'markdown'>): string {
+  return [
+    buildClipboardSection('Input', 'html', html),
+    buildClipboardSection('Actual', 'md', markdown),
+    buildClipboardSection('Expected', 'md', markdown),
+  ].join('\n\n');
+}
+
 export function createConversionBugReportUrls(options: BuildConversionBugReportOptions): ConversionBugReportUrls {
   const directUrl = buildIssueUrl(buildFields(options, true));
   const fallbackUrl = buildIssueUrl(buildFields(options, false));
