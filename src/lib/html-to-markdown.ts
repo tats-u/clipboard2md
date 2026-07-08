@@ -167,6 +167,7 @@ function rehypeFilterTitleAttributes(titleStyle: Settings['titleStyle']) {
 }
 
 const codeBlockLanguageClassPattern = /^language-(.+)$/;
+const syntaxHighlighterBrushPattern = /\bbrush\s*:\s*([\w%#-]+)\s*;?/;
 
 function normalizeCodeBlockLanguage(value: unknown): string | null {
   if (typeof value !== 'string') return null;
@@ -186,6 +187,11 @@ function getCodeBlockLanguageFromProperties(node: any): string | null {
   for (const value of values) {
     const match = codeBlockLanguageClassPattern.exec(String(value));
     if (match) return normalizeCodeBlockLanguage(match[1]);
+  }
+
+  const syntaxHighlighterMatch = syntaxHighlighterBrushPattern.exec(values.map(String).join(' '));
+  if (syntaxHighlighterMatch) {
+    return normalizeCodeBlockLanguage(syntaxHighlighterMatch[1]);
   }
 
   return null;
