@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createConversionBugReportUrls } from '../conversion-bug-report';
+import { createConversionBugReportClipboardText, createConversionBugReportUrls } from '../conversion-bug-report';
 import { defaultSettings } from '../settings';
 
 function readSearchParams(url: string): URLSearchParams {
@@ -39,5 +39,43 @@ describe('createConversionBugReportUrls', () => {
 
     expect(directUrl.length).toBeGreaterThan(fallbackUrl.length);
     expect(shouldUseFallback).toBe(true);
+  });
+});
+
+describe('createConversionBugReportClipboardText', () => {
+  it('creates a reusable report template for the clipboard', () => {
+    expect(
+      createConversionBugReportClipboardText({
+        html: '<p>Hello</p>',
+        markdown: '# Hello',
+      }),
+    ).toBe(`Input:
+
+\`\`\`html
+<p>Hello</p>
+\`\`\`
+
+Actual:
+
+\`\`\`md
+# Hello
+\`\`\`
+
+Expected:
+
+\`\`\`md
+# Hello
+\`\`\``);
+  });
+
+  it('uses longer fences when the content already contains triple backticks', () => {
+    expect(
+      createConversionBugReportClipboardText({
+        html: '<pre>```</pre>',
+        markdown: '```md
+value
+```',
+      }),
+    ).toContain('````md');
   });
 });
