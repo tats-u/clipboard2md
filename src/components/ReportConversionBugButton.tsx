@@ -76,7 +76,7 @@ export default function ReportConversionBugButton({ html, markdown }: ReportConv
   useEffect(() => {
     if (!isMenuOpen) return;
 
-    const handlePointerDown = (event: MouseEvent) => {
+    const handleMouseDown = (event: MouseEvent) => {
       if (!menuRef.current?.contains(event.target as Node)) {
         setIsMenuOpen(false);
       }
@@ -88,11 +88,11 @@ export default function ReportConversionBugButton({ html, markdown }: ReportConv
       }
     };
 
-    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('mousedown', handleMouseDown);
     document.addEventListener('keydown', handleKeyDown);
 
     return () => {
-      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('mousedown', handleMouseDown);
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, [isMenuOpen]);
