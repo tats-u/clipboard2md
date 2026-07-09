@@ -15,6 +15,11 @@ interface AppProps {
   base: string;
 }
 
+function isEditablePasteTarget(target: EventTarget | null) {
+  return target instanceof Element
+    && target.closest('input, textarea, select, [contenteditable="true"]') !== null;
+}
+
 export default function App({ base }: AppProps) {
   return (
     <SettingsProvider>
@@ -40,12 +45,8 @@ function AppContent({ base }: { base: string }) {
 
   // Paste handler — only captures HTML from clipboard
   useEffect(() => {
-    const isEditableTarget = (target: EventTarget | null) =>
-      target instanceof Element
-      && target.closest('input, textarea, select, [contenteditable="true"]') !== null;
-
     const handlePaste = (e: ClipboardEvent) => {
-      if (isEditableTarget(e.target)) {
+      if (isEditablePasteTarget(e.target)) {
         return;
       }
 

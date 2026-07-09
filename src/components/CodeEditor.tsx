@@ -11,6 +11,8 @@ interface CodeEditorProps {
   extensions?: Extension[];
 }
 
+const emptyExtensions: Extension[] = [];
+
 const editorTheme = EditorView.theme({
   '&': {
     backgroundColor: '#121212',
@@ -43,7 +45,7 @@ export default function CodeEditor({
   value,
   onChange,
   ariaLabel,
-  extensions = [],
+  extensions = emptyExtensions,
 }: CodeEditorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<EditorView | null>(null);
@@ -87,7 +89,7 @@ export default function CodeEditor({
       view.destroy();
       editorRef.current = null;
     };
-  }, []);
+  }, [ariaLabel, extensions]);
 
   useEffect(() => {
     const view = editorRef.current;
