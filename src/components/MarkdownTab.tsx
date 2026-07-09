@@ -18,9 +18,10 @@ import ConfirmDialog from './ConfirmDialog';
 interface MarkdownTabProps {
   html: string;
   markdown: string;
+  onOpenHtmlEditor: () => void;
 }
 
-export default function MarkdownTab({ html, markdown }: MarkdownTabProps) {
+export default function MarkdownTab({ html, markdown, onOpenHtmlEditor }: MarkdownTabProps) {
   const [copied, setCopied] = useState(false);
   const [quoteCopied, setQuoteCopied] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -139,7 +140,11 @@ export default function MarkdownTab({ html, markdown }: MarkdownTabProps) {
                 Edit
               </button>
             </div>
-            <ReportConversionBugButton html={html} markdown={currentMarkdown} />
+            <ReportConversionBugButton
+              html={html}
+              markdown={currentMarkdown}
+              onEditHtml={onOpenHtmlEditor}
+            />
             <button
               onClick={handleCopyAsQuote}
               className={`flex items-center gap-1.5 px-3 py-1 text-xs rounded border transition-colors duration-200 cursor-pointer

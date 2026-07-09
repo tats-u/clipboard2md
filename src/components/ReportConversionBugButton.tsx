@@ -1,14 +1,19 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { CheckIcon, CopyIcon, IssueOpenedIcon } from '@primer/octicons-react';
+import { CheckIcon, CodeIcon, CopyIcon, IssueOpenedIcon } from '@primer/octicons-react';
 import { useSettings } from './SettingsContext';
 import { createConversionBugReportClipboardText, createConversionBugReportUrls } from '../lib/conversion-bug-report';
 
 interface ReportConversionBugButtonProps {
   html: string;
   markdown: string;
+  onEditHtml?: () => void;
 }
 
-export default function ReportConversionBugButton({ html, markdown }: ReportConversionBugButtonProps) {
+export default function ReportConversionBugButton({
+  html,
+  markdown,
+  onEditHtml,
+}: ReportConversionBugButtonProps) {
   const { settings } = useSettings();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showManualDialog, setShowManualDialog] = useState(false);
@@ -72,6 +77,11 @@ export default function ReportConversionBugButton({ html, markdown }: ReportConv
       setTimeout(() => setHtmlCopied(false), 2000);
     });
   }, [copyText, html]);
+
+  const handleEditHtml = useCallback(() => {
+    setIsMenuOpen(false);
+    onEditHtml?.();
+  }, [onEditHtml]);
 
   useEffect(() => {
     if (!isMenuOpen) return;
@@ -146,6 +156,16 @@ export default function ReportConversionBugButton({ html, markdown }: ReportConv
               <CopyIcon size={14} />
               Copy Report Template
             </button>
+            {onEditHtml && (
+              <button
+                onClick={handleEditHtml}
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-200 transition-colors hover:bg-gray-800 cursor-pointer"
+                role="menuitem"
+              >
+                <CodeIcon size={14} />
+                Edit pasted HTML
+              </button>
+            )}
           </div>
         )}
       </div>

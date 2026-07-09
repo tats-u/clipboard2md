@@ -5,6 +5,7 @@ import MarkdownTab from './MarkdownTab';
 import HtmlTab from './HtmlTab';
 import Toast from './Toast';
 import SettingsPanel from './Settings';
+import HtmlEditDialog from './HtmlEditDialog';
 import { MarkGithubIcon } from '@primer/octicons-react';
 import DOMPurify from 'dompurify';
 
@@ -24,9 +25,11 @@ export default function App({ base }: AppProps) {
 
 function AppContent({ base }: { base: string }) {
   const { settings } = useSettings();
+  const [originalHtml, setOriginalHtml] = useState('');
   const [html, setHtml] = useState('');
   const [markdown, setMarkdown] = useState('');
   const [activeTab, setActiveTab] = useState<Tab>('markdown');
+  const [isHtmlEditDialogOpen, setIsHtmlEditDialogOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastVisible, setToastVisible] = useState(false);
 
@@ -35,13 +38,25 @@ function AppContent({ base }: { base: string }) {
     setToastVisible(true);
   }, []);
 
+  const isPasteTargetEditable = useCallback(
+    (target: EventTarget | null) => target instanceof Element
+      && target.closest('input, textarea, select, [contenteditable="true"]') !== null,
+    [],
+  );
+
   // Paste handler — only captures HTML from clipboard
   useEffect(() => {
     const handlePaste = (e: ClipboardEvent) => {
+      if (isPasteTargetEditable(e.target)) {
+        return;
+      }
+
       const clipboardHtml = e.clipboardData?.getData('text/html');
       if (clipboardHtml) {
         const sanitizedHtml = DOMPurify.sanitize(clipboardHtml);
+        setOriginalHtml(sanitizedHtml);
         setHtml(sanitizedHtml);
+        setIsHtmlEditDialogOpen(false);
         return;
       }
 
@@ -74,11 +89,15 @@ function AppContent({ base }: { base: string }) {
 
     document.addEventListener('paste', handlePaste);
     return () => document.removeEventListener('paste', handlePaste);
-  }, [showToast]);
+  }, [isPasteTargetEditable, showToast]);
 
   // Conversion effect — runs when html or settings change
   useEffect(() => {
-    if (!html) return;
+    if (!html) {
+      // Keep the derived Markdown state in sync when edited HTML is cleared or discarded.
+      setMarkdown('');
+      return;
+    }
     let cancelled = false;
 
     htmlToMarkdown(html, settings)
@@ -142,9 +161,18 @@ function AppContent({ base }: { base: string }) {
           {/* Content */}
           <main>
             {activeTab === 'markdown' ? (
-              <MarkdownTab html={html} markdown={markdown} />
+              <MarkdownTab
+                html={html}
+                markdown={markdown}
+                onOpenHtmlEditor={() => setIsHtmlEditDialogOpen(true)}
+              />
             ) : (
-              <HtmlTab html={html} markdown={markdown} onToast={showToast} />
+              <HtmlTab
+                html={html}
+                markdown={markdown}
+                onToast={showToast}
+                onOpenHtmlEditor={() => setIsHtmlEditDialogOpen(true)}
+              />
             )}
           </main>
         </>
@@ -165,6 +193,16 @@ function AppContent({ base }: { base: string }) {
       )}
 
       {/* Footer */}
+      <HtmlEditDialog
+        open={isHtmlEditDialogOpen}
+        currentHtml={html}
+        originalHtml={originalHtml}
+        onApply={(nextHtml) => {
+          setHtml(nextHtml);
+          setIsHtmlEditDialogOpen(false);
+        }}
+        onClose={() => setIsHtmlEditDialogOpen(false)}
+      />
       <footer className="mt-auto pt-6 text-center text-xs text-gray-500">
         <p className="mb-1">
           Your pasted content never leaves your device — all processing happens in your browser.
