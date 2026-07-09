@@ -481,6 +481,7 @@ const gfmAutolinkStartBoundaryCharacters = new Set(['*', '_', '~', '(']);
 const gfmAutolinkTrailingPunctuationCharacters = new Set(['?', '!', '.', ',', ':', '*', '_', '~']);
 
 function normalizeComparableUrl(value: string): string | null {
+  // GFM extended www autolinks normalize with an implicit `http://` scheme.
   const normalizedValue = value.startsWith('www.') ? `http://${value}` : value;
 
   try {

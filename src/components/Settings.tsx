@@ -175,7 +175,7 @@ export default function SettingsPanel() {
                 onChange={e => updateSettings({ stripNonAutolinks: e.target.checked })}
                 className="accent-[--color-accent] rounded"
               />
-              Remove non-auto links, keep labels only
+              Remove non-autolinks, keep labels only
             </label>
             <p className="text-[10px] text-gray-600 mt-1 ml-5">
               Keeps URL-like auto links, but removes normal markdown links for shorter output.
