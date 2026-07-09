@@ -479,7 +479,6 @@ const commonMarkAutolinkPattern = /^[A-Za-z][A-Za-z0-9+.-]{1,31}:[^\u0000-\u0020
 // or after `*`, `_`, `~`, `(`, and trailing `? ! . , : * _ ~` is excluded.
 const gfmAutolinkStartBoundaryCharacters = new Set(['*', '_', '~', '(']);
 const gfmAutolinkTrailingPunctuationCharacters = new Set(['?', '!', '.', ',', ':', '*', '_', '~']);
-const siblingIndexCache = new WeakMap<object, WeakMap<object, number>>();
 
 function normalizeComparableUrl(value: string): string | null {
   // GFM extended www autolinks normalize with an implicit `http://` scheme.
@@ -501,19 +500,13 @@ function urlsMatchByHref(left: string, right: string): boolean {
 function getNodeIndex(parent: any, node: any): number | undefined {
   if (!parent || !Array.isArray(parent.children) || !node || typeof node !== 'object') return undefined;
 
-  const nodeIndexes = siblingIndexCache.get(parent);
-  if (nodeIndexes) {
-    return nodeIndexes.get(node);
+  for (let index = 0; index < parent.children.length; index += 1) {
+    if (parent.children[index] === node) {
+      return index;
+    }
   }
 
-  const nextNodeIndexes = new WeakMap<object, number>();
-  parent.children.forEach((child: any, index: number) => {
-    if (child && typeof child === 'object') {
-      nextNodeIndexes.set(child, index);
-    }
-  });
-  siblingIndexCache.set(parent, nextNodeIndexes);
-  return nextNodeIndexes.get(node);
+  return undefined;
 }
 
 function getSiblingBoundaryCharacter(parent: any, index: number | undefined, direction: -1 | 1): string | null {
@@ -555,7 +548,7 @@ function canUseCommonMarkAutolink(text: string): boolean {
 function getAutolinkText(node: any): string | null {
   if (node.children.length === 0) return null;
   if (node.children.some((child: any) => child.type !== 'text')) return null;
-  return node.children.map((child: any) => child.value).join('') as string;
+  return node.children.map((child: any) => child.value).join('');
 }
 
 /**
