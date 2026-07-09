@@ -873,7 +873,9 @@ function stringifyMarkdownChildren(children: any[], settings: Settings): string 
     .use(remarkGfm);
 
   if (settings.stripNonAutolinks) {
-    processor.use(remarkStripNonAutolinks(settings.titleStyle, settings.unsafeBareAutolinks));
+    processor.use(() =>
+      remarkStripNonAutolinks(settings.titleStyle, settings.unsafeBareAutolinks),
+    );
   }
 
   if (!settings.strictCommonMark) {
@@ -1045,7 +1047,7 @@ export async function htmlToMarkdown(
     .use(remarkGfm);
 
   if (resolvedSettings.stripNonAutolinks) {
-    processor.use(
+    processor.use(() =>
       remarkStripNonAutolinks(
         resolvedSettings.titleStyle,
         resolvedSettings.unsafeBareAutolinks,
