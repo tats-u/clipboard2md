@@ -8,9 +8,10 @@ interface HtmlTabProps {
   html: string;
   markdown: string;
   onToast: (message: string) => void;
+  onOpenHtmlEditor: () => void;
 }
 
-export default function HtmlTab({ html, markdown, onToast }: HtmlTabProps) {
+export default function HtmlTab({ html, markdown, onToast, onOpenHtmlEditor }: HtmlTabProps) {
   const [copied, setCopied] = useState(false);
   const [viewMode, setViewMode] = useState<'raw' | 'formatted'>('raw');
   const [formattedHtml, setFormattedHtml] = useState<string | null>(null);
@@ -82,7 +83,7 @@ export default function HtmlTab({ html, markdown, onToast }: HtmlTabProps) {
                 {isFormatting ? 'Formatting…' : 'Formatted'}
               </button>
             </div>
-            <ReportConversionBugButton html={html} markdown={markdown} />
+            <ReportConversionBugButton html={html} markdown={markdown} onEditHtml={onOpenHtmlEditor} />
             <button
               onClick={handleCopyHtml}
               className={`flex items-center gap-1.5 px-3 py-1 text-xs rounded border transition-colors duration-200 cursor-pointer
