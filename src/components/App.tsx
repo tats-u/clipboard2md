@@ -38,9 +38,11 @@ function AppContent({ base }: { base: string }) {
     setToastVisible(true);
   }, []);
 
-  const isPasteTargetEditable = (target: EventTarget | null) =>
-    target instanceof Element
-    && target.closest('input, textarea, select, [contenteditable="true"]') !== null;
+  const isPasteTargetEditable = useCallback(
+    (target: EventTarget | null) => target instanceof Element
+      && target.closest('input, textarea, select, [contenteditable="true"]') !== null,
+    [],
+  );
 
   // Paste handler — only captures HTML from clipboard
   useEffect(() => {
@@ -87,7 +89,7 @@ function AppContent({ base }: { base: string }) {
 
     document.addEventListener('paste', handlePaste);
     return () => document.removeEventListener('paste', handlePaste);
-  }, [showToast]);
+  }, [isPasteTargetEditable, showToast]);
 
   // Conversion effect — runs when html or settings change
   useEffect(() => {
