@@ -473,10 +473,128 @@ function remarkRemoveEmptyParagraphs() {
   };
 }
 
-function remarkStripLinks() {
+const bareAutolinkProtocolsPattern = /^(?:https?:\/\/|ftp:\/\/|www\.)/;
+const commonMarkAutolinkPattern = /^[A-Za-z][A-Za-z0-9+.-]{1,31}:[^\u0000-\u0020<>]*$/;
+// GFM extended autolinks only start at beginning-of-line, after whitespace,
+// or after `*`, `_`, `~`, `(`, and trailing `? ! . , : * _ ~` is excluded.
+const gfmAutolinkStartBoundaryCharacters = new Set(['*', '_', '~', '(']);
+const gfmAutolinkTrailingPunctuationCharacters = new Set(['?', '!', '.', ',', ':', '*', '_', '~']);
+
+function normalizeComparableUrl(value: string): string | null {
+  // GFM extended www autolinks normalize with an implicit `http://` scheme.
+  const normalizedValue = value.startsWith('www.') ? `http://${value}` : value;
+
+  try {
+    return new URL(normalizedValue).href;
+  } catch {
+    return null;
+  }
+}
+
+function urlsMatchByHref(left: string, right: string): boolean {
+  const normalizedLeft = normalizeComparableUrl(left);
+  const normalizedRight = normalizeComparableUrl(right);
+  return normalizedLeft !== null && normalizedRight !== null && normalizedLeft === normalizedRight;
+}
+
+function getNodeIndex(parent: any, node: any): number | undefined {
+  if (!parent || !Array.isArray(parent.children) || !node || typeof node !== 'object') return undefined;
+
+  for (let index = 0; index < parent.children.length; index += 1) {
+    if (parent.children[index] === node) {
+      return index;
+    }
+  }
+
+  return undefined;
+}
+
+function getSiblingBoundaryCharacter(parent: any, index: number | undefined, direction: -1 | 1): string | null {
+  if (index === undefined) return null;
+
+  const sibling = parent?.children?.[index + direction];
+  if (sibling?.type !== 'text' || typeof sibling.value !== 'string' || sibling.value.length === 0) {
+    return null;
+  }
+
+  return direction === -1 ? sibling.value.at(-1) ?? null : sibling.value.charAt(0);
+}
+
+function isSafeGfmAutolinkStartBoundary(character: string | null): boolean {
+  return (
+    character === null ||
+    /\s/.test(character) ||
+    gfmAutolinkStartBoundaryCharacters.has(character)
+  );
+}
+
+function wouldExtendGfmAutolink(character: string | null): boolean {
+  return (
+    character !== null &&
+    !/\s/.test(character) &&
+    character !== '<' &&
+    !gfmAutolinkTrailingPunctuationCharacters.has(character)
+  );
+}
+
+function canUseCommonMarkAutolink(text: string): boolean {
+  return commonMarkAutolinkPattern.test(text) && normalizeComparableUrl(text) !== null;
+}
+
+/**
+ * Returns the link label as plain text when every child is a text node;
+ * otherwise returns null.
+ */
+function getAutolinkText(node: any): string | null {
+  if (node.children.length === 0) return null;
+  if (node.children.some((child: any) => child.type !== 'text')) return null;
+  return node.children.map((child: any) => child.value).join('');
+}
+
+/**
+ * Prefers bare GFM autolinks when the surrounding text preserves the same
+ * boundaries that GFM would parse. When the trailing boundary would be unsafe,
+ * this falls back to CommonMark `<...>` autolinks if possible; otherwise the
+ * caller must keep normal link syntax or unwrap the link entirely.
+ */
+function getAutolinkLiteral(
+  node: any,
+  titleStyle: Settings['titleStyle'],
+  unsafeBareAutolinks: boolean,
+  parent?: any,
+  index?: number,
+): string | null {
+  if (getEffectiveLinkTitle(node, titleStyle)) return null;
+
+  const text = getAutolinkText(node);
+  if (text === null || !bareAutolinkProtocolsPattern.test(text)) return null;
+  if (typeof node.url !== 'string' || !urlsMatchByHref(text, node.url)) return null;
+
+  const startBoundary = getSiblingBoundaryCharacter(parent, index, -1);
+  const endBoundary = getSiblingBoundaryCharacter(parent, index, 1);
+
+  if (
+    unsafeBareAutolinks ||
+    (isSafeGfmAutolinkStartBoundary(startBoundary) && !wouldExtendGfmAutolink(endBoundary))
+  ) {
+    return text;
+  }
+
+  if (canUseCommonMarkAutolink(text)) {
+    return `<${text}>`;
+  }
+
+  return null;
+}
+
+function remarkStripNonAutolinks(
+  titleStyle: Settings['titleStyle'],
+  unsafeBareAutolinks: boolean,
+) {
   return (tree: any) => {
     visit(tree, 'link', (node: any, index: number | undefined, parent: any) => {
       if (index === undefined || !parent) return;
+      if (getAutolinkLiteral(node, titleStyle, unsafeBareAutolinks, parent, index)) return;
       parent.children.splice(index, 1, ...node.children);
       return [SKIP, index];
     });
@@ -491,7 +609,9 @@ function getEffectiveLinkTitle(
     case 'remove-all':
       return null;
     case 'remove-matching-url':
-      if (node.title === node.url) return null;
+      if (typeof node.title === 'string' && typeof node.url === 'string' && urlsMatchByHref(node.title, node.url)) {
+        return null;
+      }
       return typeof node.title === 'string' ? node.title : null;
     case 'preserve-links':
     case 'preserve-all':
@@ -514,50 +634,40 @@ function getLinkNodeForMarkdown(
   return { ...node, title: effectiveTitle };
 }
 
-function getBareAutolinkLiteral(
-  node: any,
+function createLinkHandler(
   titleStyle: Settings['titleStyle'],
-): string | null {
-  if (getEffectiveLinkTitle(node, titleStyle)) return null;
-  if (node.children.length === 0) return null;
-  if (node.children.some((child: any) => child.type !== 'text')) return null;
-
-  const text = node.children.map((child: any) => child.value).join('') as string;
-  const url = node.url as string;
-  const urlWithoutProtocol = url.replace(/^https?:\/\//, '');
-
-  if (!/^(https?:\/\/|www\.)/.test(text)) return null;
-
-  if (text === url) {
-    return text;
-  }
-
-  if (/^https?:\/\//.test(url) && text === urlWithoutProtocol && text.startsWith('www.')) {
-    return text;
-  }
-
-  return null;
-}
-
-function createLinkHandler(titleStyle: Settings['titleStyle']) {
+  unsafeBareAutolinks: boolean,
+) {
   const defaultLinkHandler = mdastToMarkdownHandlers.link;
 
-  const handler = (node: any, _parent: any, state: any, info: any) => {
-    const bareAutolink = getBareAutolinkLiteral(node, titleStyle);
-    if (bareAutolink) {
-      return bareAutolink;
+  const handler = (node: any, parent: any, state: any, info: any) => {
+    const autolinkLiteral = getAutolinkLiteral(
+      node,
+      titleStyle,
+      unsafeBareAutolinks,
+      parent,
+      getNodeIndex(parent, node),
+    );
+    if (autolinkLiteral) {
+      return autolinkLiteral;
     }
 
-    return defaultLinkHandler(getLinkNodeForMarkdown(node, titleStyle), _parent, state, info);
+    return defaultLinkHandler(getLinkNodeForMarkdown(node, titleStyle), parent, state, info);
   };
 
-  handler.peek = (node: any, _parent: any, state: any) => {
-    const bareAutolink = getBareAutolinkLiteral(node, titleStyle);
-    if (bareAutolink) {
-      return bareAutolink.charAt(0);
+  handler.peek = (node: any, parent: any, state: any) => {
+    const autolinkLiteral = getAutolinkLiteral(
+      node,
+      titleStyle,
+      unsafeBareAutolinks,
+      parent,
+      getNodeIndex(parent, node),
+    );
+    if (autolinkLiteral) {
+      return autolinkLiteral.charAt(0);
     }
 
-    return defaultLinkHandler.peek(getLinkNodeForMarkdown(node, titleStyle), _parent, state);
+    return defaultLinkHandler.peek(getLinkNodeForMarkdown(node, titleStyle), parent, state);
   };
 
   return handler;
@@ -787,8 +897,10 @@ function stringifyMarkdownChildren(children: any[], settings: Settings): string 
     .use(remarkRemoveEmptyParagraphs)
     .use(remarkGfm);
 
-  if (settings.stripLinks) {
-    processor.use(remarkStripLinks);
+  if (settings.stripNonAutolinks) {
+    processor.use(() =>
+      remarkStripNonAutolinks(settings.titleStyle, settings.unsafeBareAutolinks),
+    );
   }
 
   if (!settings.strictCommonMark) {
@@ -801,7 +913,7 @@ function stringifyMarkdownChildren(children: any[], settings: Settings): string 
     setext: false,
     handlers: {
       break: createBreakHandler(settings.brStyle),
-      link: createLinkHandler(settings.titleStyle),
+      link: createLinkHandler(settings.titleStyle, settings.unsafeBareAutolinks),
     },
   });
 
@@ -959,8 +1071,13 @@ export async function htmlToMarkdown(
     .use(remarkRemoveEmptyParagraphs)
     .use(remarkGfm);
 
-  if (resolvedSettings.stripLinks) {
-    processor.use(remarkStripLinks);
+  if (resolvedSettings.stripNonAutolinks) {
+    processor.use(() =>
+      remarkStripNonAutolinks(
+        resolvedSettings.titleStyle,
+        resolvedSettings.unsafeBareAutolinks,
+      ),
+    );
   }
 
   if (!resolvedSettings.strictCommonMark) {
@@ -974,7 +1091,10 @@ export async function htmlToMarkdown(
       setext: false,
       handlers: {
         break: createBreakHandler(resolvedSettings.brStyle),
-        link: createLinkHandler(resolvedSettings.titleStyle),
+        link: createLinkHandler(
+          resolvedSettings.titleStyle,
+          resolvedSettings.unsafeBareAutolinks,
+        ),
       },
     })
     .process(html);

@@ -171,14 +171,29 @@ export default function SettingsPanel() {
             <label className="flex items-center gap-2 text-xs text-gray-300 cursor-pointer">
               <input
                 type="checkbox"
-                checked={settings.stripLinks}
-                onChange={e => updateSettings({ stripLinks: e.target.checked })}
+                checked={settings.stripNonAutolinks}
+                onChange={e => updateSettings({ stripNonAutolinks: e.target.checked })}
                 className="accent-[--color-accent] rounded"
               />
-              Remove links, keep labels only
+              Remove non-autolinks, keep labels only
             </label>
             <p className="text-[10px] text-gray-600 mt-1 ml-5">
-              Useful when you want shorter Markdown for prompts, translation, or AI chat.
+              Keeps URL-like auto links, but removes normal markdown links for shorter output.
+            </p>
+          </div>
+
+          <div className="mb-4">
+            <label className="flex items-center gap-2 text-xs text-gray-300 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={settings.unsafeBareAutolinks}
+                onChange={e => updateSettings({ unsafeBareAutolinks: e.target.checked })}
+                className="accent-[--color-accent] rounded"
+              />
+              Keep bare GFM autolinks even with unsafe boundaries
+            </label>
+            <p className="text-[10px] text-gray-600 mt-1 ml-5">
+              Shorter for prompts or translation, but adjacent text may become part of the link.
             </p>
           </div>
 
