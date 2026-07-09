@@ -15,7 +15,7 @@ interface AppProps {
   base: string;
 }
 
-function isEditablePasteTarget(target: EventTarget | null) {
+function isPasteTargetEditable(target: EventTarget | null) {
   return target instanceof Element
     && target.closest('input, textarea, select, [contenteditable="true"]') !== null;
 }
@@ -46,7 +46,7 @@ function AppContent({ base }: { base: string }) {
   // Paste handler — only captures HTML from clipboard
   useEffect(() => {
     const handlePaste = (e: ClipboardEvent) => {
-      if (isEditablePasteTarget(e.target)) {
+      if (isPasteTargetEditable(e.target)) {
         return;
       }
 
@@ -93,6 +93,7 @@ function AppContent({ base }: { base: string }) {
   // Conversion effect — runs when html or settings change
   useEffect(() => {
     if (!html) {
+      // Keep the derived Markdown state in sync when edited HTML is cleared or discarded.
       setMarkdown('');
       return;
     }
