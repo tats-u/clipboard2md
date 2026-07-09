@@ -50,6 +50,8 @@ export default function CodeEditor({
   const containerRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<EditorView | null>(null);
   const onChangeRef = useRef(onChange);
+  const initialAriaLabelRef = useRef(ariaLabel);
+  const initialExtensionsRef = useRef(extensions);
 
   useEffect(() => {
     onChangeRef.current = onChange;
@@ -69,7 +71,7 @@ export default function CodeEditor({
           editorTheme,
           EditorView.lineWrapping,
           EditorView.contentAttributes.of({
-            'aria-label': ariaLabel,
+            'aria-label': initialAriaLabelRef.current,
             spellcheck: 'false',
           }),
           EditorView.updateListener.of((update: ViewUpdate) => {
@@ -77,7 +79,7 @@ export default function CodeEditor({
               onChangeRef.current(update.state.doc.toString());
             }
           }),
-          ...extensions,
+          ...initialExtensionsRef.current,
         ],
       }),
       parent: containerRef.current,
@@ -89,7 +91,7 @@ export default function CodeEditor({
       view.destroy();
       editorRef.current = null;
     };
-  }, [ariaLabel, extensions]);
+  }, []);
 
   useEffect(() => {
     const view = editorRef.current;

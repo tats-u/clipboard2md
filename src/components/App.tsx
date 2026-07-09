@@ -15,11 +15,6 @@ interface AppProps {
   base: string;
 }
 
-function isPasteTargetEditable(target: EventTarget | null) {
-  return target instanceof Element
-    && target.closest('input, textarea, select, [contenteditable="true"]') !== null;
-}
-
 export default function App({ base }: AppProps) {
   return (
     <SettingsProvider>
@@ -42,6 +37,10 @@ function AppContent({ base }: { base: string }) {
     setToastMessage(message);
     setToastVisible(true);
   }, []);
+
+  const isPasteTargetEditable = (target: EventTarget | null) =>
+    target instanceof Element
+    && target.closest('input, textarea, select, [contenteditable="true"]') !== null;
 
   // Paste handler — only captures HTML from clipboard
   useEffect(() => {
