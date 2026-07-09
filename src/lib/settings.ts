@@ -12,7 +12,8 @@ export interface Settings {
   hrStyle: '*' | '-' | '_';
   titleStyle: TitleStyle;
   imageStyle: 'preserve-size' | 'markdown' | 'placeholder';
-  stripLinks: boolean;
+  stripNonAutolinks: boolean;
+  unsafeBareAutolinks: boolean;
   strictCommonMark: boolean;
   allowRawHtml: boolean;
 }
@@ -23,13 +24,15 @@ export const defaultSettings: Settings = {
   hrStyle: '*',
   titleStyle: 'remove-matching-url',
   imageStyle: 'preserve-size',
-  stripLinks: false,
+  stripNonAutolinks: false,
+  unsafeBareAutolinks: false,
   strictCommonMark: true,
   allowRawHtml: true,
 };
 
 interface LegacySettings extends Partial<Settings> {
   linkTitleStyle?: unknown;
+  stripLinks?: unknown;
 }
 
 export function normalizeTitleStyle(value: unknown): TitleStyle {
@@ -47,11 +50,21 @@ export function normalizeTitleStyle(value: unknown): TitleStyle {
 }
 
 export function normalizeSettings(settings?: LegacySettings | null): Settings {
-  const { linkTitleStyle, ...nextSettings } = settings ?? {};
+  const { linkTitleStyle, stripLinks, ...nextSettings } = settings ?? {};
   return {
     ...defaultSettings,
     ...nextSettings,
     titleStyle: normalizeTitleStyle(nextSettings.titleStyle ?? linkTitleStyle),
+    stripNonAutolinks:
+      typeof nextSettings.stripNonAutolinks === 'boolean'
+        ? nextSettings.stripNonAutolinks
+        : typeof stripLinks === 'boolean'
+          ? stripLinks
+          : defaultSettings.stripNonAutolinks,
+    unsafeBareAutolinks:
+      typeof nextSettings.unsafeBareAutolinks === 'boolean'
+        ? nextSettings.unsafeBareAutolinks
+        : defaultSettings.unsafeBareAutolinks,
   };
 }
 

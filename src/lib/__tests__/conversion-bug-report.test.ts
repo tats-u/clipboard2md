@@ -21,7 +21,8 @@ describe('createConversionBugReportUrls', () => {
     expect(directParams.get('problematic_html')).toBe('<p>Hello</p>');
     expect(directParams.get('actual_markdown')).toBe('Hello');
     expect(directParams.get('conversion_settings')).toContain('- imageStyle: preserve-size');
-    expect(directParams.get('conversion_settings')).toContain('- stripLinks: false');
+    expect(directParams.get('conversion_settings')).toContain('- stripNonAutolinks: false');
+    expect(directParams.get('conversion_settings')).toContain('- unsafeBareAutolinks: false');
     expect(directParams.get('conversion_settings')).toContain('- strictCommonMark: true');
 
     const fallbackParams = readSearchParams(fallbackUrl);

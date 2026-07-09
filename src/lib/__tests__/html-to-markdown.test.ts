@@ -143,16 +143,22 @@ em {
       expect(md).toContain('[click here](https://example.com)');
     });
 
-    it('outputs only link labels when configured', async () => {
+    it('outputs only non-autolink labels when configured', async () => {
       const html = '<p>Visit <a href="https://example.com">Example</a> now</p>';
-      const md = await htmlToMarkdown(html, { stripLinks: true });
+      const md = await htmlToMarkdown(html, { stripNonAutolinks: true });
       expect(md.trim()).toBe('Visit Example now');
     });
 
-    it('preserves formatted link labels when stripping links', async () => {
+    it('preserves formatted link labels when stripping non-autolinks', async () => {
       const html = '<a href="https://example.com">click <strong>here</strong></a>';
-      const md = await htmlToMarkdown(html, { stripLinks: true });
+      const md = await htmlToMarkdown(html, { stripNonAutolinks: true });
       expect(md.trim()).toBe('click **here**');
+    });
+
+    it('keeps matching autolinks when configured to strip non-autolinks', async () => {
+      const html = '<p><a href="http://example.com/">http://example.com/</a></p>';
+      const md = await htmlToMarkdown(html, { stripNonAutolinks: true });
+      expect(md.trim()).toBe('http://example.com/');
     });
 
     it('keeps markdown link syntax when the link title must be preserved', async () => {
@@ -165,6 +171,27 @@ em {
       const html = '<a href="http://example.com/" title="http://example.com/">http://example.com/</a>';
       const md = await htmlToMarkdown(html);
       expect(md.trim()).toBe('http://example.com/');
+    });
+
+    it('matches autolinks by normalized href and prefers the label text', async () => {
+      const html =
+        '<p><a href="https://xn--p8j9a0d9c9a.xn--q9jyb4c">https://はじめよう.みんな/</a></p>';
+      const md = await htmlToMarkdown(html);
+      expect(md.trim()).toBe('https://はじめよう.みんな/');
+    });
+
+    it('falls back to CommonMark autolinks when a GFM bare autolink boundary would break', async () => {
+      const html =
+        '<p><a href="https://xn--p8j9a0d9c9a.xn--q9jyb4c/">https://はじめよう.みんな/</a>を参照。</p>';
+      const md = await htmlToMarkdown(html);
+      expect(md.trim()).toBe('<https://はじめよう.みんな/>を参照。');
+    });
+
+    it('can keep unsafe GFM bare autolinks when configured', async () => {
+      const html =
+        '<p><a href="https://xn--p8j9a0d9c9a.xn--q9jyb4c/">https://はじめよう.みんな/</a>を参照。</p>';
+      const md = await htmlToMarkdown(html, { unsafeBareAutolinks: true });
+      expect(md.trim()).toBe('https://はじめよう.みんな/を参照。');
     });
 
     it('unwraps stripped span wrappers inside links while preserving the original href', async () => {

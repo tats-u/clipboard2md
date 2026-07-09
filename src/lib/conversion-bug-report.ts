@@ -34,7 +34,8 @@ function formatSettings(settings: Settings): string {
     `- hrStyle: ${settings.hrStyle}`,
     `- titleStyle: ${settings.titleStyle}`,
     `- imageStyle: ${settings.imageStyle}`,
-    `- stripLinks: ${settings.stripLinks}`,
+    `- stripNonAutolinks: ${settings.stripNonAutolinks}`,
+    `- unsafeBareAutolinks: ${settings.unsafeBareAutolinks}`,
     `- strictCommonMark: ${settings.strictCommonMark}`,
     `- allowRawHtml: ${settings.allowRawHtml}`,
   ].join('\n');
