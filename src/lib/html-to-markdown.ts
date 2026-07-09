@@ -473,8 +473,10 @@ function remarkRemoveEmptyParagraphs() {
   };
 }
 
-const bareAutolinkProtocolsPattern = /^(https?:\/\/|ftp:\/\/|www\.)/;
+const bareAutolinkProtocolsPattern = /^(?:https?:\/\/|ftp:\/\/|www\.)/;
 const commonMarkAutolinkPattern = /^[A-Za-z][A-Za-z0-9+.-]{1,31}:[^\u0000-\u0020<>]*$/;
+// GFM extended autolinks only start at beginning-of-line, after whitespace,
+// or after `*`, `_`, `~`, `(`, and trailing `? ! . , : * _ ~` is excluded.
 const gfmAutolinkStartBoundaryCharacters = new Set(['*', '_', '~', '(']);
 const gfmAutolinkTrailingPunctuationCharacters = new Set(['?', '!', '.', ',', ':', '*', '_', '~']);
 
