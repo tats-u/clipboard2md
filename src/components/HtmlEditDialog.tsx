@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import CodeEditor from './CodeEditor';
 import CodeBlock from './CodeBlock';
 import SettingsPanel from './Settings';
+import ConfirmDialog from './ConfirmDialog';
 import { useSettings } from './SettingsContext';
 import { htmlToMarkdown } from '../lib/html-to-markdown';
 
@@ -25,6 +26,8 @@ export default function HtmlEditDialog({
   const [markdown, setMarkdown] = useState('');
   const [isConverting, setIsConverting] = useState(false);
   const [conversionError, setConversionError] = useState('');
+  const [showDiscardDialog, setShowDiscardDialog] = useState(false);
+  const hasUnsavedChanges = draftHtml !== currentHtml;
 
   useEffect(() => {
     if (!open) {
@@ -32,22 +35,8 @@ export default function HtmlEditDialog({
     }
 
     setDraftHtml(currentHtml);
+    setShowDiscardDialog(false);
   }, [currentHtml, open]);
-
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        onClose();
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [onClose, open]);
 
   useEffect(() => {
     if (!open) {
@@ -92,9 +81,38 @@ export default function HtmlEditDialog({
     onApply(draftHtml);
   }, [draftHtml, onApply]);
 
+  const handleRequestClose = useCallback(() => {
+    if (hasUnsavedChanges) {
+      setShowDiscardDialog(true);
+      return;
+    }
+
+    onClose();
+  }, [hasUnsavedChanges, onClose]);
+
+  const handleConfirmDiscard = useCallback(() => {
+    setShowDiscardDialog(false);
+    onClose();
+  }, [onClose]);
+
   const handleReset = useCallback(() => {
     setDraftHtml(originalHtml);
   }, [originalHtml]);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        handleRequestClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [handleRequestClose, open]);
 
   if (!open) {
     return null;
@@ -108,7 +126,7 @@ export default function HtmlEditDialog({
       aria-labelledby="html-edit-dialog-title"
       onClick={(event) => {
         if (event.target === event.currentTarget) {
-          onClose();
+          handleRequestClose();
         }
       }}
     >
@@ -125,7 +143,7 @@ export default function HtmlEditDialog({
           <div className="flex items-center gap-2">
             <SettingsPanel />
             <button
-              onClick={onClose}
+              onClick={handleRequestClose}
               className="rounded border border-gray-700 px-3 py-2 text-sm text-gray-300 transition-colors hover:border-gray-500 hover:text-gray-100"
             >
               Discard
@@ -175,7 +193,7 @@ export default function HtmlEditDialog({
 
         <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <button
-            onClick={onClose}
+            onClick={handleRequestClose}
             className="rounded border border-gray-600 px-3 py-2 text-sm text-gray-300 transition-colors hover:border-gray-500 hover:text-gray-100"
           >
             Discard and close
@@ -187,6 +205,15 @@ export default function HtmlEditDialog({
             Apply and close
           </button>
         </div>
+        <ConfirmDialog
+          open={showDiscardDialog}
+          title="Discard HTML edits?"
+          description="The edited HTML has not been applied yet. Discard your changes and close this dialog?"
+          confirmLabel="Discard edits"
+          cancelLabel="Keep editing"
+          onConfirm={handleConfirmDiscard}
+          onCancel={() => setShowDiscardDialog(false)}
+        />
       </div>
     </div>
   );
