@@ -33,7 +33,7 @@ function AppContent({ base }: { base: string }) {
   const [toastMessage, setToastMessage] = useState('');
   const [toastVisible, setToastVisible] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
-  const [isAppleDevice, setIsAppleDevice] = useState<boolean | null>(null);
+  const [isAppleDevice, setIsAppleDevice] = useState(false);
 
   const showToast = useCallback((message: string) => {
     setToastMessage(message);
@@ -43,11 +43,14 @@ function AppContent({ base }: { base: string }) {
   useEffect(() => {
     setIsHydrated(true);
 
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    const platform = window.navigator.platform || window.navigator.userAgent;
+    const nav = window.navigator as Navigator & {
+      userAgentData?: { platform?: string };
+    };
+    // Some browsers expose the platform via userAgentData, while others only expose
+    // navigator.platform or the raw userAgent string.
+    const platform = nav.userAgentData?.platform
+      ?? window.navigator.platform
+      ?? window.navigator.userAgent;
     setIsAppleDevice(/Mac|iPhone|iPad|iPod/i.test(platform));
   }, []);
 
@@ -206,14 +209,9 @@ function AppContent({ base }: { base: string }) {
               </div>
             </>
           ) : (
-            <>
-              <p className="text-gray-500 text-lg mb-3">
-                Preparing… please wait a moment
-              </p>
-              <p className="text-gray-600 text-sm">
-                The app is still loading. Please wait until it is ready to paste HTML.
-              </p>
-            </>
+            <p className="text-gray-500 text-lg mb-3">
+              Preparing... please wait a moment
+            </p>
           )}
           <span className="mt-6 text-accent text-2xl animate-blink">▌</span>
         </div>
