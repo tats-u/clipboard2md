@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { html } from '@codemirror/lang-html';
 import CodeEditor from './CodeEditor';
 import CodeBlock from './CodeBlock';
 import SettingsPanel from './Settings';
@@ -27,6 +28,7 @@ export default function HtmlEditDialog({
   const [isConverting, setIsConverting] = useState(false);
   const [conversionError, setConversionError] = useState('');
   const [showDiscardDialog, setShowDiscardDialog] = useState(false);
+  const htmlEditorExtensions = useMemo(() => [html()], []);
   const hasUnsavedChanges = draftHtml !== currentHtml;
 
   useEffect(() => {
@@ -169,6 +171,7 @@ export default function HtmlEditDialog({
               value={draftHtml}
               onChange={setDraftHtml}
               ariaLabel="HTML source editor"
+              extensions={htmlEditorExtensions}
             />
           </section>
 
