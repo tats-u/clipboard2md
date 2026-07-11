@@ -167,13 +167,53 @@ function rehypeFilterTitleAttributes(titleStyle: Settings['titleStyle']) {
 }
 
 const codeBlockLanguageClassPattern = /^language-(.+)$/;
+const githubCodeBlockLanguageClassPattern = /^highlight-(source|text)-(.+)$/;
 // Mirrors SyntaxHighlighter opts-parser value parsing for `brush: <lang>`, including `#`/`%` tokens.
 const syntaxHighlighterBrushPattern = /\bbrush\s*:\s*([\w%#-]+)\s*;?/;
+const githubCodeBlockLanguageMap = new Map<string, string>([
+  ['cs', 'csharp'],
+  ['fsharp', 'fsharp'],
+  ['html-basic', 'html'],
+  ['html-asciidoc', 'asciidoc'],
+  ['html-php', 'php'],
+  ['js', 'js'],
+  ['json', 'json'],
+  ['go', 'go'],
+  ['ini', 'ini'],
+  ['java', 'java'],
+  ['kotlin', 'kotlin'],
+  ['md', 'md'],
+  ['mdx', 'mdx'],
+  ['perl', 'perl'],
+  ['powershell', 'powershell'],
+  ['restructuredtext', 'rst'],
+  ['rust', 'rust'],
+  ['shell', 'shell'],
+  ['swift', 'swift'],
+  ['toml', 'toml'],
+  ['ts', 'ts'],
+  ['tsx', 'tsx'],
+  ['xml', 'xml'],
+  ['yaml', 'yaml'],
+]);
 
 function normalizeCodeBlockLanguage(value: unknown): string | null {
   if (typeof value !== 'string') return null;
   const normalized = value.trim();
   return normalized.length > 0 ? normalized : null;
+}
+
+function normalizeGitHubCodeBlockLanguage(kind: string, value: string): string | null {
+  const normalizedValue = normalizeCodeBlockLanguage(value)?.toLowerCase();
+  if (!normalizedValue) return null;
+
+  if (kind === 'source') {
+    return githubCodeBlockLanguageMap.get(normalizedValue) ?? normalizedValue;
+  }
+
+  if (normalizedValue === 'html') return 'html';
+
+  return githubCodeBlockLanguageMap.get(normalizedValue) ?? normalizedValue;
 }
 
 function getCodeBlockLanguageFromProperties(node: any): string | null {
@@ -189,6 +229,11 @@ function getCodeBlockLanguageFromProperties(node: any): string | null {
   for (const value of values) {
     const match = codeBlockLanguageClassPattern.exec(String(value));
     if (match) return normalizeCodeBlockLanguage(match[1]);
+
+    const githubMatch = githubCodeBlockLanguageClassPattern.exec(String(value));
+    if (githubMatch) {
+      return normalizeGitHubCodeBlockLanguage(githubMatch[1], githubMatch[2]);
+    }
   }
 
   const syntaxHighlighterMatch = syntaxHighlighterBrushPattern.exec(classNameText);
