@@ -32,10 +32,23 @@ function AppContent({ base }: { base: string }) {
   const [isHtmlEditDialogOpen, setIsHtmlEditDialogOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastVisible, setToastVisible] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
+  const [isAppleDevice, setIsAppleDevice] = useState<boolean | null>(null);
 
   const showToast = useCallback((message: string) => {
     setToastMessage(message);
     setToastVisible(true);
+  }, []);
+
+  useEffect(() => {
+    setIsHydrated(true);
+
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const platform = window.navigator.platform || window.navigator.userAgent;
+    setIsAppleDevice(/Mac|iPhone|iPad|iPod/i.test(platform));
   }, []);
 
   const isPasteTargetEditable = useCallback(
@@ -108,6 +121,7 @@ function AppContent({ base }: { base: string }) {
   }, [html, settings, showToast]);
 
   const hasContent = html.length > 0;
+  const pasteShortcutLabel = isAppleDevice ? '⌘+V' : 'Ctrl+V';
 
   const tabs: { id: Tab; label: string }[] = [
     { id: 'markdown', label: 'Markdown' },
@@ -179,15 +193,28 @@ function AppContent({ base }: { base: string }) {
       ) : (
         /* Empty state */
         <div className="flex flex-col items-center justify-center min-h-[70vh] text-center select-none">
-          <p className="text-gray-500 text-lg mb-3">
-            Paste HTML content here
-          </p>
-          <div className="flex items-center gap-2 text-gray-600 text-sm">
-            <kbd className="px-2.5 py-1 rounded border border-gray-700 bg-gray-900 text-gray-400 text-xs font-mono shadow-sm">
-              Ctrl+V
-            </kbd>
-            <span>to convert</span>
-          </div>
+          {isHydrated ? (
+            <>
+              <p className="text-gray-500 text-lg mb-3">
+                Paste HTML content here
+              </p>
+              <div className="flex items-center gap-2 text-gray-600 text-sm">
+                <kbd className="px-2.5 py-1 rounded border border-gray-700 bg-gray-900 text-gray-400 text-xs font-mono shadow-sm">
+                  {pasteShortcutLabel}
+                </kbd>
+                <span>to convert</span>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="text-gray-500 text-lg mb-3">
+                Preparing… please wait a moment
+              </p>
+              <p className="text-gray-600 text-sm">
+                The app is still loading. Please wait until it is ready to paste HTML.
+              </p>
+            </>
+          )}
           <span className="mt-6 text-accent text-2xl animate-blink">▌</span>
         </div>
       )}
