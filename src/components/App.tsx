@@ -124,8 +124,7 @@ function AppContent({ base }: { base: string }) {
   }, [html, settings, showToast]);
 
   const hasContent = html.length > 0;
-  const pasteShortcutLabel = isAppleDevice ? '⌘+V' : 'Ctrl+V';
-  const pasteShortcutParts = pasteShortcutLabel.split('+');
+  const modifierKey = isAppleDevice ? '⌘' : 'Ctrl';
 
   const tabs: { id: Tab; label: string }[] = [
     { id: 'markdown', label: 'Markdown' },
@@ -204,16 +203,13 @@ function AppContent({ base }: { base: string }) {
               </p>
               <div className="flex items-center gap-2 text-gray-600 text-sm">
                 <div className="flex items-center gap-1">
-                  {pasteShortcutParts.map((part, index) => (
-                    <div key={part} className="flex items-center gap-1">
-                      <kbd className="px-2.5 py-1 rounded border border-gray-700 bg-gray-900 text-gray-400 text-xs font-mono shadow-sm">
-                        {part}
-                      </kbd>
-                      {index < pasteShortcutParts.length - 1 && (
-                        <span className="text-gray-500">+</span>
-                      )}
-                    </div>
-                  ))}
+                  <kbd className="px-2.5 py-1 rounded border border-gray-700 bg-gray-900 text-gray-400 text-xs font-mono shadow-sm">
+                    {modifierKey}
+                  </kbd>
+                  <span className="text-gray-500">+</span>
+                  <kbd className="px-2.5 py-1 rounded border border-gray-700 bg-gray-900 text-gray-400 text-xs font-mono shadow-sm">
+                    V
+                  </kbd>
                 </div>
                 <span>to convert</span>
               </div>
