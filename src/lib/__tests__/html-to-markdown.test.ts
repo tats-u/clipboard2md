@@ -636,6 +636,53 @@ em {
         ].join('\n'),
       );
     });
+
+    it('detects GitHub highlight classes on code block wrappers', async () => {
+      const html = [
+        '<div class="highlight highlight-text-html-basic notranslate"><pre class="notranslate">&lt;p&gt;HTML&lt;/p&gt;</pre></div>',
+        '<div class="highlight highlight-text-md notranslate"><pre class="notranslate">Markdown</pre></div>',
+        '<div class="highlight highlight-source-cs notranslate"><pre class="notranslate">Console.WriteLine("C#");</pre></div>',
+        '<div class="highlight highlight-source-js notranslate"><pre class="notranslate">console.log("JS");</pre></div>',
+        '<div class="highlight highlight-source-tsx notranslate"><pre class="notranslate">console.log("TSX");</pre></div>',
+        '<div class="highlight highlight-text-html-php notranslate"><pre class="notranslate">&lt;?php\necho "PHP";</pre></div>',
+        '<div class="highlight highlight-text-restructuredtext notranslate"><pre class="notranslate">reStructuredText</pre></div>',
+      ].join('\n');
+
+      const md = await htmlToMarkdown(html);
+
+      expect(md.trim()).toBe(
+        [
+          '```html',
+          '<p>HTML</p>',
+          '```',
+          '',
+          '```md',
+          'Markdown',
+          '```',
+          '',
+          '```csharp',
+          'Console.WriteLine("C#");',
+          '```',
+          '',
+          '```js',
+          'console.log("JS");',
+          '```',
+          '',
+          '```tsx',
+          'console.log("TSX");',
+          '```',
+          '',
+          '```php',
+          '<?php',
+          'echo "PHP";',
+          '```',
+          '',
+          '```rst',
+          'reStructuredText',
+          '```',
+        ].join('\n'),
+      );
+    });
   });
 
   describe('safe HTML preservation', () => {

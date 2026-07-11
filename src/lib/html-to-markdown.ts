@@ -167,13 +167,28 @@ function rehypeFilterTitleAttributes(titleStyle: Settings['titleStyle']) {
 }
 
 const codeBlockLanguageClassPattern = /^language-(.+)$/;
+const githubCodeBlockLanguageClassPattern = /^highlight-(?:source|text)-(.+)$/;
 // Mirrors SyntaxHighlighter opts-parser value parsing for `brush: <lang>`, including `#`/`%` tokens.
 const syntaxHighlighterBrushPattern = /\bbrush\s*:\s*([\w%#-]+)\s*;?/;
+const githubCodeBlockLanguageMap = new Map<string, string>([
+  ['cs', 'csharp'],
+  ['html-basic', 'html'],
+  ['html-asciidoc', 'asciidoc'],
+  ['html-php', 'php'],
+  ['restructuredtext', 'rst'],
+]);
 
 function normalizeCodeBlockLanguage(value: unknown): string | null {
   if (typeof value !== 'string') return null;
   const normalized = value.trim();
   return normalized.length > 0 ? normalized : null;
+}
+
+function normalizeGitHubCodeBlockLanguage(value: string): string | null {
+  const normalizedValue = normalizeCodeBlockLanguage(value)?.toLowerCase();
+  if (!normalizedValue) return null;
+
+  return githubCodeBlockLanguageMap.get(normalizedValue) ?? normalizedValue;
 }
 
 function getCodeBlockLanguageFromProperties(node: any): string | null {
@@ -189,6 +204,11 @@ function getCodeBlockLanguageFromProperties(node: any): string | null {
   for (const value of values) {
     const match = codeBlockLanguageClassPattern.exec(String(value));
     if (match) return normalizeCodeBlockLanguage(match[1]);
+
+    const githubMatch = githubCodeBlockLanguageClassPattern.exec(String(value));
+    if (githubMatch) {
+      return normalizeGitHubCodeBlockLanguage(githubMatch[1]);
+    }
   }
 
   const syntaxHighlighterMatch = syntaxHighlighterBrushPattern.exec(classNameText);
