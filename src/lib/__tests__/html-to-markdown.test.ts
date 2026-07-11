@@ -149,6 +149,19 @@ em {
       expect(md.trim()).toBe('Visit Example now');
     });
 
+    it('converts truncated ellipsis labels into autolinks only when stripping non-autolinks', async () => {
+      const html =
+        '<p><a href="https://example.com/articles/123">https://example.com/art…</a></p>';
+
+      const strippedMd = await htmlToMarkdown(html, { stripNonAutolinks: true });
+      expect(strippedMd.trim()).toBe('https://example.com/articles/123');
+
+      const defaultMd = await htmlToMarkdown(html);
+      expect(defaultMd.trim()).toBe(
+        '[https://example.com/art…](https://example.com/articles/123)',
+      );
+    });
+
     it('preserves formatted link labels when stripping non-autolinks', async () => {
       const html = '<a href="https://example.com">click <strong>here</strong></a>';
       const md = await htmlToMarkdown(html, { stripNonAutolinks: true });
@@ -218,6 +231,16 @@ em {
       );
       expect(md).not.toContain('class=""');
       expect(md).not.toContain('<span>');
+    });
+
+    it('does not normalize href prefixes when matching truncated ellipsis labels', async () => {
+      const html =
+        '<p><a href="https://xn--zckzah.example/%E3%83%86%E3%82%B9%E3%83%88/%E3%83%86%E3%82%B9%E3%83%88">https://テスト.example/テス…</a></p>';
+      const md = await htmlToMarkdown(html, { stripNonAutolinks: true });
+      expect(md.trim()).toContain('https');
+      expect(md.trim()).toContain('テスト.example/テス…');
+      expect(md).not.toContain('xn--zckzah.example');
+      expect(md).not.toContain('%E3%83%86%E3%82%B9%E3%83%88');
     });
 
     it('removes all link titles when configured', async () => {

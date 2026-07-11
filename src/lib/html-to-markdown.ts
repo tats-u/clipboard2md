@@ -541,6 +541,31 @@ function canUseCommonMarkAutolink(text: string): boolean {
   return commonMarkAutolinkPattern.test(text) && normalizeComparableUrl(text) !== null;
 }
 
+function formatAutolinkLiteral(
+  text: string,
+  canUseBareAutolink: boolean,
+  unsafeBareAutolinks: boolean,
+  parent?: any,
+  index?: number,
+): string | null {
+  const startBoundary = getSiblingBoundaryCharacter(parent, index, -1);
+  const endBoundary = getSiblingBoundaryCharacter(parent, index, 1);
+
+  if (
+    canUseBareAutolink &&
+    (unsafeBareAutolinks ||
+      (isSafeGfmAutolinkStartBoundary(startBoundary) && !wouldExtendGfmAutolink(endBoundary)))
+  ) {
+    return text;
+  }
+
+  if (canUseCommonMarkAutolink(text)) {
+    return `<${text}>`;
+  }
+
+  return null;
+}
+
 /**
  * Returns the link label as plain text when every child is a text node;
  * otherwise returns null.
@@ -549,6 +574,20 @@ function getAutolinkText(node: any): string | null {
   if (node.children.length === 0) return null;
   if (node.children.some((child: any) => child.type !== 'text')) return null;
   return node.children.map((child: any) => child.value).join('');
+}
+
+function getEllipsisAutolinkText(node: any, stripNonAutolinks: boolean): string | null {
+  const text = getAutolinkText(node);
+  if (!stripNonAutolinks || text === null || typeof node.url !== 'string' || !text.endsWith('…')) {
+    return null;
+  }
+
+  const truncatedText = text.slice(0, -1);
+  // Intentionally compare the raw href string here. Parsing both sides with
+  // `new URL()` and then checking normalized href prefixes would make punycode
+  // and percent-encoding rules affect which representation becomes the
+  // autolink, which is the excluded behavior for this heuristic.
+  return node.url.startsWith(truncatedText) ? node.url : null;
 }
 
 /**
@@ -561,30 +600,27 @@ function getAutolinkLiteral(
   node: any,
   titleStyle: Settings['titleStyle'],
   unsafeBareAutolinks: boolean,
+  stripNonAutolinks: boolean,
   parent?: any,
   index?: number,
 ): string | null {
+  const ellipsisAutolinkText = getEllipsisAutolinkText(node, stripNonAutolinks);
+  if (ellipsisAutolinkText !== null) {
+    return formatAutolinkLiteral(
+      ellipsisAutolinkText,
+      bareAutolinkProtocolsPattern.test(ellipsisAutolinkText),
+      unsafeBareAutolinks,
+      parent,
+      index,
+    );
+  }
+
   if (getEffectiveLinkTitle(node, titleStyle)) return null;
 
   const text = getAutolinkText(node);
   if (text === null || !bareAutolinkProtocolsPattern.test(text)) return null;
   if (typeof node.url !== 'string' || !urlsMatchByHref(text, node.url)) return null;
-
-  const startBoundary = getSiblingBoundaryCharacter(parent, index, -1);
-  const endBoundary = getSiblingBoundaryCharacter(parent, index, 1);
-
-  if (
-    unsafeBareAutolinks ||
-    (isSafeGfmAutolinkStartBoundary(startBoundary) && !wouldExtendGfmAutolink(endBoundary))
-  ) {
-    return text;
-  }
-
-  if (canUseCommonMarkAutolink(text)) {
-    return `<${text}>`;
-  }
-
-  return null;
+  return formatAutolinkLiteral(text, true, unsafeBareAutolinks, parent, index);
 }
 
 function remarkStripNonAutolinks(
@@ -594,7 +630,7 @@ function remarkStripNonAutolinks(
   return (tree: any) => {
     visit(tree, 'link', (node: any, index: number | undefined, parent: any) => {
       if (index === undefined || !parent) return;
-      if (getAutolinkLiteral(node, titleStyle, unsafeBareAutolinks, parent, index)) return;
+      if (getAutolinkLiteral(node, titleStyle, unsafeBareAutolinks, true, parent, index)) return;
       parent.children.splice(index, 1, ...node.children);
       return [SKIP, index];
     });
@@ -637,6 +673,7 @@ function getLinkNodeForMarkdown(
 function createLinkHandler(
   titleStyle: Settings['titleStyle'],
   unsafeBareAutolinks: boolean,
+  stripNonAutolinks: boolean,
 ) {
   const defaultLinkHandler = mdastToMarkdownHandlers.link;
 
@@ -645,6 +682,7 @@ function createLinkHandler(
       node,
       titleStyle,
       unsafeBareAutolinks,
+      stripNonAutolinks,
       parent,
       getNodeIndex(parent, node),
     );
@@ -660,6 +698,7 @@ function createLinkHandler(
       node,
       titleStyle,
       unsafeBareAutolinks,
+      stripNonAutolinks,
       parent,
       getNodeIndex(parent, node),
     );
@@ -913,7 +952,11 @@ function stringifyMarkdownChildren(children: any[], settings: Settings): string 
     setext: false,
     handlers: {
       break: createBreakHandler(settings.brStyle),
-      link: createLinkHandler(settings.titleStyle, settings.unsafeBareAutolinks),
+      link: createLinkHandler(
+        settings.titleStyle,
+        settings.unsafeBareAutolinks,
+        settings.stripNonAutolinks,
+      ),
     },
   });
 
@@ -1094,6 +1137,7 @@ export async function htmlToMarkdown(
         link: createLinkHandler(
           resolvedSettings.titleStyle,
           resolvedSettings.unsafeBareAutolinks,
+          resolvedSettings.stripNonAutolinks,
         ),
       },
     })
