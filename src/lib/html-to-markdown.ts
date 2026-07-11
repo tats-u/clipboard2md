@@ -211,8 +211,6 @@ function normalizeGitHubCodeBlockLanguage(kind: string, value: string): string |
     return githubCodeBlockLanguageMap.get(normalizedValue) ?? normalizedValue;
   }
 
-  if (normalizedValue === 'html') return 'html';
-
   return githubCodeBlockLanguageMap.get(normalizedValue) ?? normalizedValue;
 }
 
