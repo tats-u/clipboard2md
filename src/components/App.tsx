@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import { htmlToMarkdown } from '../lib/html-to-markdown';
-import { splitShortcutLabel } from '../lib/shortcut-label';
 import { SettingsProvider, useSettings } from './SettingsContext';
 import MarkdownTab from './MarkdownTab';
 import HtmlTab from './HtmlTab';
@@ -126,7 +125,7 @@ function AppContent({ base }: { base: string }) {
 
   const hasContent = html.length > 0;
   const pasteShortcutLabel = isAppleDevice ? '⌘+V' : 'Ctrl+V';
-  const pasteShortcutParts = splitShortcutLabel(pasteShortcutLabel);
+  const pasteShortcutParts = pasteShortcutLabel.split('+');
 
   const tabs: { id: Tab; label: string }[] = [
     { id: 'markdown', label: 'Markdown' },
