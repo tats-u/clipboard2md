@@ -206,7 +206,7 @@ function AppContent({ base }: { base: string }) {
               <div className="flex items-center gap-2 text-gray-600 text-sm">
                 <div className="flex items-center gap-1">
                   {pasteShortcutParts.map((part, index) => (
-                    <div key={`${part}-${index}`} className="flex items-center gap-1">
+                    <div key={part} className="flex items-center gap-1">
                       <kbd className="px-2.5 py-1 rounded border border-gray-700 bg-gray-900 text-gray-400 text-xs font-mono shadow-sm">
                         {part}
                       </kbd>
