@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { htmlToMarkdown } from '../lib/html-to-markdown';
+import { splitShortcutLabel } from '../lib/shortcut-label';
 import { SettingsProvider, useSettings } from './SettingsContext';
 import MarkdownTab from './MarkdownTab';
 import HtmlTab from './HtmlTab';
@@ -125,6 +126,7 @@ function AppContent({ base }: { base: string }) {
 
   const hasContent = html.length > 0;
   const pasteShortcutLabel = isAppleDevice ? '⌘+V' : 'Ctrl+V';
+  const pasteShortcutParts = splitShortcutLabel(pasteShortcutLabel);
 
   const tabs: { id: Tab; label: string }[] = [
     { id: 'markdown', label: 'Markdown' },
@@ -202,9 +204,18 @@ function AppContent({ base }: { base: string }) {
                 Paste HTML content here
               </p>
               <div className="flex items-center gap-2 text-gray-600 text-sm">
-                <kbd className="px-2.5 py-1 rounded border border-gray-700 bg-gray-900 text-gray-400 text-xs font-mono shadow-sm">
-                  {pasteShortcutLabel}
-                </kbd>
+                <div className="flex items-center gap-1">
+                  {pasteShortcutParts.map((part, index) => (
+                    <div key={`${part}-${index}`} className="flex items-center gap-1">
+                      <kbd className="px-2.5 py-1 rounded border border-gray-700 bg-gray-900 text-gray-400 text-xs font-mono shadow-sm">
+                        {part}
+                      </kbd>
+                      {index < pasteShortcutParts.length - 1 && (
+                        <span className="text-gray-500">+</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
                 <span>to convert</span>
               </div>
             </>
