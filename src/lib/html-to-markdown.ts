@@ -167,34 +167,15 @@ function rehypeFilterTitleAttributes(titleStyle: Settings['titleStyle']) {
 }
 
 const codeBlockLanguageClassPattern = /^language-(.+)$/;
-const githubCodeBlockLanguageClassPattern = /^highlight-(source|text)-(.+)$/;
+const githubCodeBlockLanguageClassPattern = /^highlight-(?:source|text)-(.+)$/;
 // Mirrors SyntaxHighlighter opts-parser value parsing for `brush: <lang>`, including `#`/`%` tokens.
 const syntaxHighlighterBrushPattern = /\bbrush\s*:\s*([\w%#-]+)\s*;?/;
 const githubCodeBlockLanguageMap = new Map<string, string>([
   ['cs', 'csharp'],
-  ['fsharp', 'fsharp'],
   ['html-basic', 'html'],
   ['html-asciidoc', 'asciidoc'],
   ['html-php', 'php'],
-  ['js', 'js'],
-  ['json', 'json'],
-  ['go', 'go'],
-  ['ini', 'ini'],
-  ['java', 'java'],
-  ['kotlin', 'kotlin'],
-  ['md', 'md'],
-  ['mdx', 'mdx'],
-  ['perl', 'perl'],
-  ['powershell', 'powershell'],
   ['restructuredtext', 'rst'],
-  ['rust', 'rust'],
-  ['shell', 'shell'],
-  ['swift', 'swift'],
-  ['toml', 'toml'],
-  ['ts', 'ts'],
-  ['tsx', 'tsx'],
-  ['xml', 'xml'],
-  ['yaml', 'yaml'],
 ]);
 
 function normalizeCodeBlockLanguage(value: unknown): string | null {
@@ -203,13 +184,9 @@ function normalizeCodeBlockLanguage(value: unknown): string | null {
   return normalized.length > 0 ? normalized : null;
 }
 
-function normalizeGitHubCodeBlockLanguage(kind: string, value: string): string | null {
+function normalizeGitHubCodeBlockLanguage(value: string): string | null {
   const normalizedValue = normalizeCodeBlockLanguage(value)?.toLowerCase();
   if (!normalizedValue) return null;
-
-  if (kind === 'source') {
-    return githubCodeBlockLanguageMap.get(normalizedValue) ?? normalizedValue;
-  }
 
   return githubCodeBlockLanguageMap.get(normalizedValue) ?? normalizedValue;
 }
@@ -230,7 +207,7 @@ function getCodeBlockLanguageFromProperties(node: any): string | null {
 
     const githubMatch = githubCodeBlockLanguageClassPattern.exec(String(value));
     if (githubMatch) {
-      return normalizeGitHubCodeBlockLanguage(githubMatch[1], githubMatch[2]);
+      return normalizeGitHubCodeBlockLanguage(githubMatch[1]);
     }
   }
 
