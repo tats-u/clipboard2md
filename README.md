@@ -42,6 +42,9 @@ node --run preview
 
 ## AI usage note
 
-Scaffolded with GitHub Copilot CLI powered by Claude Opus 4.6.
+Most feature changes and improvements are implemented through instructions given to LLMs:
 
-GPT-5.4 has been mainly used for improvements since Opus 4.6 became unavailable in Copilot Pro.
+- Claude Opus 4.6 (including scaffolding) (Before [being removed from the Pro plan](https://github.blog/changelog/2026-04-20-changes-to-github-copilot-plans-for-individuals/#opus-models-removed-from-pro))
+- GPT-5.4 (after Opus 4.6 was removed)
+- MAI-Code-1-Flash
+- Claude Haiku 4.5 (litest tasks)
