@@ -4,6 +4,7 @@ import CodeEditor from './CodeEditor';
 import CodeBlock from './CodeBlock';
 import SettingsPanel from './Settings';
 import ConfirmDialog from './ConfirmDialog';
+import ReportConversionBugButton from './ReportConversionBugButton';
 import { useSettings } from './SettingsContext';
 import { htmlToMarkdown } from '../lib/html-to-markdown';
 
@@ -143,6 +144,7 @@ export default function HtmlEditDialog({
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <ReportConversionBugButton html={draftHtml} markdown={markdown} />
             <SettingsPanel />
             <button
               onClick={handleRequestClose}
