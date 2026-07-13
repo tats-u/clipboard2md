@@ -59,6 +59,13 @@ describe('htmlToMarkdown', () => {
       expect(md).toContain('- b');
     });
 
+    it('treats consecutive orphan li nodes as a single unordered list', async () => {
+      const html = '<li>A</li>\n<li>B</li>\n<li>C</li>';
+      const md = await htmlToMarkdown(html);
+
+      expect(md.trim()).toBe('- A\n- B\n- C');
+    });
+
     it('respects listMarker setting *', async () => {
       const html = '<ul><li>a</li><li>b</li></ul>';
       const md = await htmlToMarkdown(html, { listMarker: '*' });

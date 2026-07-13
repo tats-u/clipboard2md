@@ -428,6 +428,59 @@ function rehypeUnwrapTransparentWrappers() {
   };
 }
 
+function isOrphanListItem(node: any, parent: any): boolean {
+  return (
+    node?.type === 'element' &&
+    node.tagName === 'li' &&
+    (parent?.type !== 'element' || (parent.tagName !== 'ul' && parent.tagName !== 'ol'))
+  );
+}
+
+function rehypeWrapOrphanListItems() {
+  return (tree: any) => {
+    visit(tree, (node: any) => Array.isArray(node.children), (node: any) => {
+      if (!Array.isArray(node.children)) return;
+
+      const nextChildren: any[] = [];
+
+      for (let index = 0; index < node.children.length; ) {
+        const child = node.children[index];
+
+        if (!isOrphanListItem(child, node)) {
+          nextChildren.push(child);
+          index += 1;
+          continue;
+        }
+
+        const listChildren: any[] = [];
+
+        while (index < node.children.length) {
+          const current = node.children[index];
+
+          if (isWhitespaceOnlyTextNode(current)) {
+            index += 1;
+            continue;
+          }
+
+          if (!isOrphanListItem(current, node)) break;
+
+          listChildren.push(current);
+          index += 1;
+        }
+
+        nextChildren.push({
+          type: 'element',
+          tagName: 'ul',
+          properties: {},
+          children: listChildren,
+        });
+      }
+
+      node.children = nextChildren;
+    });
+  };
+}
+
 const emptyPhrasingContainerTypes = new Set(['delete', 'emphasis', 'link', 'strong']);
 
 function markdownNodeHasMeaningfulContent(node: any): boolean {
@@ -1127,6 +1180,7 @@ export async function htmlToMarkdown(
     .use(rehypeDropEmptyProperties)
     .use(rehypeNormalizeTableCellSpans)
     .use(rehypeUnwrapTransparentWrappers)
+    .use(rehypeWrapOrphanListItems)
     .use(rehypeRemark, {
       handlers: createRehypeRemarkHandlers(resolvedSettings),
     } as any)
