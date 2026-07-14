@@ -150,6 +150,11 @@ export default function SettingsPanel() {
                   label: 'Replace with placeholder text',
                   description: 'Outputs (Image) or (Image: alt text).',
                 },
+                {
+                  value: 'placeholder-generic',
+                  label: 'Replace with generic placeholder text',
+                  description: 'Always outputs (Image), ignoring alt text.',
+                },
               ] as const).map(({ value, label, description }) => (
                 <button
                   key={value}

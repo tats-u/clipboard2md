@@ -861,7 +861,8 @@ function normalizeImageAltText(value: unknown): string | null {
   return normalized.length > 0 ? normalized : null;
 }
 
-function getImagePlaceholderText(node: ImageLikeNode): string {
+function getImagePlaceholderText(node: ImageLikeNode, useAltText: boolean): string {
+  if (!useAltText) return '(Image)';
   const alt = normalizeImageAltText(node.properties?.alt);
   return alt ? `(Image: ${alt})` : '(Image)';
 }
@@ -871,7 +872,13 @@ function createImageHandler(settings: Settings) {
 
   return (state: any, node: any) => {
     if (settings.imageStyle === 'placeholder') {
-      const result = { type: 'text', value: getImagePlaceholderText(node) };
+      const result = { type: 'text', value: getImagePlaceholderText(node, true) };
+      state.patch(node, result);
+      return result;
+    }
+
+    if (settings.imageStyle === 'placeholder-generic') {
+      const result = { type: 'text', value: getImagePlaceholderText(node, false) };
       state.patch(node, result);
       return result;
     }

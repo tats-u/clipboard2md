@@ -11,7 +11,7 @@ export interface Settings {
   brStyle: 'backslash' | 'spaces' | 'newline';
   hrStyle: '*' | '-' | '_';
   titleStyle: TitleStyle;
-  imageStyle: 'preserve-size' | 'markdown' | 'placeholder';
+  imageStyle: 'preserve-size' | 'markdown' | 'placeholder' | 'placeholder-generic';
   stripNonAutolinks: boolean;
   unsafeBareAutolinks: boolean;
   strictCommonMark: boolean;
@@ -49,12 +49,25 @@ export function normalizeTitleStyle(value: unknown): TitleStyle {
   }
 }
 
+function normalizeImageStyle(value: unknown): Settings['imageStyle'] {
+  switch (value) {
+    case 'preserve-size':
+    case 'markdown':
+    case 'placeholder':
+    case 'placeholder-generic':
+      return value;
+    default:
+      return defaultSettings.imageStyle;
+  }
+}
+
 export function normalizeSettings(settings?: LegacySettings | null): Settings {
   const { linkTitleStyle, stripLinks, ...nextSettings } = settings ?? {};
   return {
     ...defaultSettings,
     ...nextSettings,
     titleStyle: normalizeTitleStyle(nextSettings.titleStyle ?? linkTitleStyle),
+    imageStyle: normalizeImageStyle(nextSettings.imageStyle),
     stripNonAutolinks:
       typeof nextSettings.stripNonAutolinks === 'boolean'
         ? nextSettings.stripNonAutolinks
