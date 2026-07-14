@@ -378,10 +378,10 @@ em {
     });
 
     it('uses a generic placeholder regardless of alt text when configured', async () => {
-      const html = '<p>Before <img src="https://example.com/cat.png" alt="Cat"> after</p>';
+      const html = '<p>Before <img src="https://example.com/cat.png" alt="Cat"> after <img src="https://example.com/dog.png"></p>';
       const md = await htmlToMarkdown(html, { imageStyle: 'placeholder-generic' });
 
-      expect(md.trim()).toBe('Before (Image) after');
+      expect(md.trim()).toBe('Before (Image) after (Image)');
     });
   });
 
