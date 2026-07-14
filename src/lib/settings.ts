@@ -6,12 +6,15 @@ export type TitleStyle =
   | 'preserve-links'
   | 'preserve-all';
 
+export const imageStyleValues = ['preserve-size', 'markdown', 'placeholder', 'placeholder-generic'] as const;
+export type ImageStyle = (typeof imageStyleValues)[number];
+
 export interface Settings {
   listMarker: '-' | '*' | '+';
   brStyle: 'backslash' | 'spaces' | 'newline';
   hrStyle: '*' | '-' | '_';
   titleStyle: TitleStyle;
-  imageStyle: 'preserve-size' | 'markdown' | 'placeholder';
+  imageStyle: ImageStyle;
   stripNonAutolinks: boolean;
   unsafeBareAutolinks: boolean;
   strictCommonMark: boolean;
@@ -49,12 +52,17 @@ export function normalizeTitleStyle(value: unknown): TitleStyle {
   }
 }
 
+function normalizeImageStyle(value: unknown): ImageStyle {
+  return imageStyleValues.includes(value as ImageStyle) ? value as ImageStyle : defaultSettings.imageStyle;
+}
+
 export function normalizeSettings(settings?: LegacySettings | null): Settings {
   const { linkTitleStyle, stripLinks, ...nextSettings } = settings ?? {};
   return {
     ...defaultSettings,
     ...nextSettings,
     titleStyle: normalizeTitleStyle(nextSettings.titleStyle ?? linkTitleStyle),
+    imageStyle: normalizeImageStyle(nextSettings.imageStyle),
     stripNonAutolinks:
       typeof nextSettings.stripNonAutolinks === 'boolean'
         ? nextSettings.stripNonAutolinks
