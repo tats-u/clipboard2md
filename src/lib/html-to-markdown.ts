@@ -74,6 +74,14 @@ function rehypeNormalizeNonSemanticBoldItalicTags() {
       if (node.tagName === 'i') {
         node.tagName = 'em';
       }
+
+      if (node.tagName === 's') {
+        node.tagName = 'del';
+      }
+
+      if (node.tagName === 'cite' || node.tagName === 'dfn') {
+        node.tagName = 'em';
+      }
     });
   };
 }

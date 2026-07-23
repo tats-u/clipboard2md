@@ -771,15 +771,26 @@ em {
       expect(md).toContain('<u>underline</u> <ins>inserted</ins>');
     });
 
-    it('converts b and i tags into markdown emphasis when configured', async () => {
-      const html = '<p><i>italic</i> <b>bold</b> <s>strike</s></p>';
+    it('converts configured presentational inline tags into markdown emphasis', async () => {
+      const html = '<p><i>italic</i> <b>bold</b> <s>strike</s> <cite>source</cite> <dfn>term</dfn></p>';
 
       const md = await htmlToMarkdown(html, {
         allowRawHtml: true,
         convertNonSemanticBoldItalic: true,
       });
 
-      expect(md.trim()).toBe('*italic* **bold** <s>strike</s>');
+      expect(md.trim()).toBe('*italic* **bold** ~~strike~~ *source* *term*');
+    });
+
+    it('leaves address and var as HTML when configured presentational tag conversion is enabled', async () => {
+      const html = '<p><address>Example Street</address> <var>x</var></p>';
+
+      const md = await htmlToMarkdown(html, {
+        allowRawHtml: true,
+        convertNonSemanticBoldItalic: true,
+      });
+
+      expect(md.trim()).toBe('<address>Example Street</address> <var>x</var>');
     });
 
     it('converts block-only children inside preserved HTML wrappers into markdown blocks', async () => {

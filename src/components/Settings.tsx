@@ -183,7 +183,7 @@ export default function SettingsPanel() {
               Convert non-semantic bold/italic tags to Markdown emphasis
             </label>
             <p className="text-[10px] text-gray-600 mt-1 ml-5">
-              Turns tags like <code>&lt;b&gt;</code> and <code>&lt;i&gt;</code> into <code>**</code> and <code>*</code>.
+              Turns tags like <code>&lt;b&gt;</code>, <code>&lt;i&gt;</code>, <code>&lt;s&gt;</code>, <code>&lt;cite&gt;</code>, and <code>&lt;dfn&gt;</code> into Markdown emphasis.
             </p>
           </div>
 
