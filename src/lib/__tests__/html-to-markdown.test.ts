@@ -782,7 +782,7 @@ em {
       expect(md.trim()).toBe('*italic* **bold** ~~strike~~ *source* *term*');
     });
 
-    it('leaves address and var as HTML when configured presentational tag conversion is enabled', async () => {
+    it('does not treat address and var as presentational emphasis tags', async () => {
       const html = '<p><address>Example Street</address> <var>x</var></p>';
 
       const md = await htmlToMarkdown(html, {
@@ -790,7 +790,7 @@ em {
         convertNonSemanticBoldItalic: true,
       });
 
-      expect(md.trim()).toBe('<address>Example Street</address> <var>x</var>');
+      expect(md.trim()).toBe('Example Street `x`');
     });
 
     it('converts block-only children inside preserved HTML wrappers into markdown blocks', async () => {
