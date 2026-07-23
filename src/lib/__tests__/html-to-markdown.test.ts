@@ -784,12 +784,14 @@ em {
 
     it('does not treat address and var as presentational emphasis tags', async () => {
       const html = '<p><address>Example Street</address> <var>x</var></p>';
+      const baseline = await htmlToMarkdown(html, { allowRawHtml: true });
 
       const md = await htmlToMarkdown(html, {
         allowRawHtml: true,
         convertNonSemanticBoldItalic: true,
       });
 
+      expect(md).toBe(baseline);
       expect(md.trim()).toBe('Example Street `x`');
     });
 

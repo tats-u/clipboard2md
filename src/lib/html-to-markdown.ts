@@ -67,20 +67,18 @@ function rehypeRemoveDetailsOpen() {
 function rehypeNormalizeNonSemanticBoldItalicTags() {
   return (tree: any) => {
     visit(tree, 'element', (node: any) => {
-      if (node.tagName === 'b') {
-        node.tagName = 'strong';
-      }
-
-      if (node.tagName === 'i') {
-        node.tagName = 'em';
-      }
-
-      if (node.tagName === 's') {
-        node.tagName = 'del';
-      }
-
-      if (node.tagName === 'cite' || node.tagName === 'dfn') {
-        node.tagName = 'em';
+      switch (node.tagName) {
+        case 'b':
+          node.tagName = 'strong';
+          break;
+        case 'i':
+        case 'cite':
+        case 'dfn':
+          node.tagName = 'em';
+          break;
+        case 's':
+          node.tagName = 'del';
+          break;
       }
     });
   };
