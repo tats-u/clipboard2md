@@ -15,4 +15,11 @@ describe('normalizeSettings', () => {
       unsafeBareAutolinks: false,
     });
   });
+
+  it('keeps convertNonSemanticBoldItalic disabled by default', () => {
+    expect(normalizeSettings()).toMatchObject({
+      ...defaultSettings,
+      convertNonSemanticBoldItalic: false,
+    });
+  });
 });

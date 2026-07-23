@@ -771,6 +771,17 @@ em {
       expect(md).toContain('<u>underline</u> <ins>inserted</ins>');
     });
 
+    it('converts b and i tags into markdown emphasis when configured', async () => {
+      const html = '<p><i>italic</i> <b>bold</b> <s>strike</s></p>';
+
+      const md = await htmlToMarkdown(html, {
+        allowRawHtml: true,
+        convertNonSemanticBoldItalic: true,
+      });
+
+      expect(md.trim()).toBe('*italic* **bold** <s>strike</s>');
+    });
+
     it('converts block-only children inside preserved HTML wrappers into markdown blocks', async () => {
       const html = [
         '<dl>',

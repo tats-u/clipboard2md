@@ -176,6 +176,21 @@ export default function SettingsPanel() {
             <label className="flex items-center gap-2 text-xs text-gray-300 cursor-pointer">
               <input
                 type="checkbox"
+                checked={settings.convertNonSemanticBoldItalic}
+                onChange={e => updateSettings({ convertNonSemanticBoldItalic: e.target.checked })}
+                className="accent-[--color-accent] rounded"
+              />
+              Convert non-semantic bold/italic tags to Markdown emphasis
+            </label>
+            <p className="text-[10px] text-gray-600 mt-1 ml-5">
+              Turns tags like <code>&lt;b&gt;</code> and <code>&lt;i&gt;</code> into <code>**</code> and <code>*</code>.
+            </p>
+          </div>
+
+          <div className="mb-4">
+            <label className="flex items-center gap-2 text-xs text-gray-300 cursor-pointer">
+              <input
+                type="checkbox"
                 checked={settings.stripNonAutolinks}
                 onChange={e => updateSettings({ stripNonAutolinks: e.target.checked })}
                 className="accent-[--color-accent] rounded"

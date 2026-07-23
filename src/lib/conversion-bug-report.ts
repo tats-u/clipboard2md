@@ -34,6 +34,7 @@ function formatSettings(settings: Settings): string {
     `- hrStyle: ${settings.hrStyle}`,
     `- titleStyle: ${settings.titleStyle}`,
     `- imageStyle: ${settings.imageStyle}`,
+    `- convertNonSemanticBoldItalic: ${settings.convertNonSemanticBoldItalic}`,
     `- stripNonAutolinks: ${settings.stripNonAutolinks}`,
     `- unsafeBareAutolinks: ${settings.unsafeBareAutolinks}`,
     `- strictCommonMark: ${settings.strictCommonMark}`,
