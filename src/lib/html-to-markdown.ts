@@ -64,6 +64,26 @@ function rehypeRemoveDetailsOpen() {
   };
 }
 
+function rehypeNormalizeNonSemanticBoldItalicTags() {
+  return (tree: any) => {
+    visit(tree, 'element', (node: any) => {
+      switch (node.tagName) {
+        case 'b':
+          node.tagName = 'strong';
+          break;
+        case 'i':
+        case 'cite':
+        case 'dfn':
+          node.tagName = 'em';
+          break;
+        case 's':
+          node.tagName = 'del';
+          break;
+      }
+    });
+  };
+}
+
 function normalizeHeadingLevel(value: unknown): number | null {
   const normalized =
     typeof value === 'number'
@@ -1185,7 +1205,13 @@ export async function htmlToMarkdown(
     .use(rehypeDropDirWithoutLang)
     .use(rehypeFilterTitleAttributes, resolvedSettings.titleStyle)
     .use(rehypeDropEmptyProperties)
-    .use(rehypeNormalizeTableCellSpans)
+    .use(rehypeNormalizeTableCellSpans);
+
+  if (resolvedSettings.convertNonSemanticBoldItalic) {
+    processor.use(rehypeNormalizeNonSemanticBoldItalicTags);
+  }
+
+  processor
     .use(rehypeUnwrapTransparentWrappers)
     .use(rehypeWrapOrphanListItems)
     .use(rehypeRemark, {

@@ -15,6 +15,7 @@ export interface Settings {
   hrStyle: '*' | '-' | '_';
   titleStyle: TitleStyle;
   imageStyle: ImageStyle;
+  convertNonSemanticBoldItalic: boolean;
   stripNonAutolinks: boolean;
   unsafeBareAutolinks: boolean;
   strictCommonMark: boolean;
@@ -27,6 +28,7 @@ export const defaultSettings: Settings = {
   hrStyle: '*',
   titleStyle: 'remove-matching-url',
   imageStyle: 'preserve-size',
+  convertNonSemanticBoldItalic: false,
   stripNonAutolinks: false,
   unsafeBareAutolinks: false,
   strictCommonMark: true,
