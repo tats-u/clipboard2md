@@ -69,11 +69,11 @@ function rehypeNormalizeNonSemanticBoldItalicTags() {
     visit(tree, 'element', (node: any) => {
       if (node.tagName === 'b') {
         node.tagName = 'strong';
-        return;
       }
 
-      if (node.tagName !== 'i') return;
-      node.tagName = 'em';
+      if (node.tagName === 'i') {
+        node.tagName = 'em';
+      }
     });
   };
 }
