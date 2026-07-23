@@ -72,9 +72,8 @@ function rehypeNormalizeNonSemanticBoldItalicTags() {
         return;
       }
 
-      if (node.tagName === 'i') {
-        node.tagName = 'em';
-      }
+      if (node.tagName !== 'i') return;
+      node.tagName = 'em';
     });
   };
 }
