@@ -598,6 +598,17 @@ em {
       );
     });
 
+    it('prefers language metadata on code over ancestor divs when pre has none', async () => {
+      const html = `
+        <div data-lang="bash">
+          <pre><code data-controller="snippet" class="language-toml hljs">key = "value"</code></pre>
+        </div>`;
+
+      const md = await htmlToMarkdown(html);
+
+      expect(md.trim()).toBe('```toml\nkey = "value"\n```');
+    });
+
     it('detects data-lang from up to two ancestor divs', async () => {
       const html = `
         <div class="code-frame" data-lang="bash">

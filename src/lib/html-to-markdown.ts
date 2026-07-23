@@ -243,6 +243,15 @@ function getCodeBlockLanguage(node: any, ancestors: any[]): string | null {
   const selfLanguage = getCodeBlockLanguageFromProperties(node);
   if (selfLanguage) return selfLanguage;
 
+  if (Array.isArray(node.children)) {
+    for (const child of node.children) {
+      if (child.type !== 'element' || child.tagName !== 'code') continue;
+
+      const childLanguage = getCodeBlockLanguageFromProperties(child);
+      if (childLanguage) return childLanguage;
+    }
+  }
+
   let checkedDivAncestors = 0;
 
   for (let index = ancestors.length - 1; index >= 0; index -= 1) {
