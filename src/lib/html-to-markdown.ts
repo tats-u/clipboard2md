@@ -333,6 +333,7 @@ function rehypeDropIdAndClass() {
     visit(tree, 'element', (node: any) => {
       if (!node.properties) return;
       delete node.properties.id;
+      delete node.properties.name;
       delete node.properties.className;
       // `aria-label` has no Markdown equivalent and can force raw HTML output.
       delete node.properties.ariaLabel;
