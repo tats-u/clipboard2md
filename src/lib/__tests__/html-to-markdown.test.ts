@@ -886,12 +886,12 @@ em {
   });
 
   describe('id/class stripping', () => {
-    it('strips id and class everywhere while unwrapping empty structural wrappers', async () => {
+    it('strips id, name, and class everywhere while unwrapping empty structural wrappers', async () => {
       const html = [
         '<section id="base64_functions">',
         '<article class="doc-entry">',
         '<div class="markdown">',
-        '<p id="summary">Utilities for <span id="label" lang="ja" class="inline">base64</span> encoding and decoding.</p>',
+        '<p id="summary" name="summary">Utilities for <span id="label" lang="ja" class="inline">base64</span> encoding and decoding.</p>',
         '</div>',
         '</article>',
         '</section>',
@@ -904,11 +904,23 @@ em {
       expect(md).not.toContain('<span id=');
       expect(md).not.toContain('<span class=');
       expect(md).not.toContain('id=');
+      expect(md).not.toContain('name=');
       expect(md).not.toContain('class=');
       expect(md).not.toContain('user-content-');
       expect(md).not.toContain('<section');
       expect(md).not.toContain('<article');
       expect(md).not.toContain('<div');
+    });
+
+    it('converts note.com paragraphs with name attributes into markdown paragraphs', async () => {
+      const html = [
+        '<p name="8c7cd905-222e-46ac-ac80-d352e31ff48a" id="8c7cd905-222e-46ac-ac80-d352e31ff48a">1行目</p>',
+        '<p name="c81c09d3-6cf1-41e9-9666-97e78d9cdd1f" id="c81c09d3-6cf1-41e9-9666-97e78d9cdd1f"><strong>2行目</strong></p>',
+      ].join('');
+
+      const md = await htmlToMarkdown(html);
+
+      expect(md).toBe('1行目\n\n**2行目**\n');
     });
 
     it('does not add an extra blank line after heading wrapper divs ending in block content', async () => {
