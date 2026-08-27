@@ -53,5 +53,5 @@
     "@typescript/native-preview": "7.0.0-dev.20260320.1",
     "vitest": "^4.1.9"
   },
-  "packageManager": "pnpm@11.11.0"
+  "packageManager": "pnpm@12.0.0"
 }
