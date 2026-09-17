@@ -79,3 +79,17 @@ body {
   animation: none;
   opacity: 1;
 }
+
+.empty-state-paste-button {
+  display: none;
+}
+
+@media (pointer: coarse), (hover: none) {
+  .empty-state-shortcut {
+    display: none;
+  }
+
+  .empty-state-paste-button {
+    display: inline-flex;
+  }
+}
