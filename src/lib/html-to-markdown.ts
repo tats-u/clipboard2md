@@ -328,6 +328,20 @@ function rehypeNormalizeTableCellSpans() {
   };
 }
 
+function rehypeDropTablePresentationAttributes() {
+  return (tree: any) => {
+    visit(tree, 'element', (node: any) => {
+      if (node.tagName !== 'table') return;
+      // Copied border and spacing settings do not affect the table's content.
+      // Keeping them would force an otherwise GFM-compatible table into HTML.
+      // All of these presentation attributes are deprecated in HTML.
+      delete node.properties?.border;
+      delete node.properties?.cellPadding;
+      delete node.properties?.cellSpacing;
+    });
+  };
+}
+
 function rehypeDropIdAndClass() {
   return (tree: any) => {
     visit(tree, 'element', (node: any) => {
@@ -1215,6 +1229,7 @@ export async function htmlToMarkdown(
     .use(rehypeDropDirWithoutLang)
     .use(rehypeFilterTitleAttributes, resolvedSettings.titleStyle)
     .use(rehypeDropEmptyProperties)
+    .use(rehypeDropTablePresentationAttributes)
     .use(rehypeNormalizeTableCellSpans);
 
   if (resolvedSettings.convertNonSemanticBoldItalic) {
