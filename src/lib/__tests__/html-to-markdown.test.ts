@@ -467,6 +467,41 @@ em {
   });
 
   describe('table fallback', () => {
+    it('converts copied F5 tables with presentation attributes and unit spans to GFM', async () => {
+      const rows = [
+        ['Product', 'Branch', 'Versions known to be vulnerable<sup>1</sup>', 'Fixes introduced in', 'Severity/CVSS score', 'Vulnerable component or feature'],
+        ['BIG-IP Next CNF', 'All', 'None', 'Not applicable', 'Not vulnerable', 'None'],
+        ['BIG-IP Next for Kubernetes', 'All', 'None', 'Not applicable', 'Not vulnerable', 'None'],
+      ];
+      const html = [
+        '<div class="article-text-block"><span part="formatted-rich-text"><p><span class="subsubsectiontitle"></span></p></span></div>',
+        '<div class="article-text-block"><span part="formatted-rich-text">',
+        '<table class="askf5table" border="1" cellpadding="1" cellspacing="1" style="width: 100%;"><tbody>',
+        ...rows.map((cells) => `<tr>${cells.map((cell) => `<td colspan="1" rowspan="1">${cell}</td>`).join('')}</tr>`),
+        '</tbody></table></span></div>',
+      ].join('');
+
+      const md = await htmlToMarkdown(html);
+
+      expect(md).toMatch(/^\|.*\|\n\|[ |\-]+\|\n/);
+      expect(md).toMatch(/\| Product\s*\| Branch\s*\| Versions known to be vulnerable1\s*\|/);
+      expect(md).toMatch(/\| BIG-IP Next CNF\s*\| All\s*\| None\s*\| Not applicable\s*\| Not vulnerable\s*\| None\s*\|/);
+      expect(md).toMatch(/\| BIG-IP Next for Kubernetes\s*\| All\s*\| None\s*\| Not applicable\s*\| Not vulnerable\s*\| None\s*\|/);
+      expect(md).not.toContain('<table');
+      expect(md).not.toContain('<td');
+    });
+
+    it.each(['border="1"', 'cellpadding="1"', 'cellspacing="1"'])(
+      'ignores the table presentation attribute %s',
+      async (attribute) => {
+        const md = await htmlToMarkdown(
+          `<table ${attribute}><tr><th>Header</th></tr><tr><td>Cell</td></tr></table>`,
+        );
+
+        expect(md).toBe('| Header |\n| ------ |\n| Cell   |\n');
+      },
+    );
+
     it('converts simple GFM-compatible tables', async () => {
       const html = `
         <table>
