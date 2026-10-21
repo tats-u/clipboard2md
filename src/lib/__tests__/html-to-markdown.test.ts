@@ -585,6 +585,39 @@ em {
   });
 
   describe('code block language detection', () => {
+    it.each([
+      '<pre data-language="tsx"><code>const value = 1</code></pre>',
+      '<pre><code data-language="tsx">const value = 1</code></pre>',
+      '<div data-language="tsx"><div><pre><code>const value = 1</code></pre></div></div>',
+    ])('detects data-language metadata in %s', async (html) => {
+      const md = await htmlToMarkdown(html);
+
+      expect(md.trim()).toBe('```tsx\nconst value = 1\n```');
+    });
+
+    it('preserves the language label and highlighted code with data-language', async () => {
+      const html = `<div class="codeblock">
+        <div><div>tsx</div><button aria-label="Copy code to clipboard"><svg></svg></button></div>
+        <div><pre class="th-code th-code--tsx" data-language="tsx"><code><span class="th-token th-keyword">const</span> getOrigin = createIsomorphicFn()
+  .server(() =&gt; new URL(getRequest().url).origin)
+  .client(() =&gt; window.location.origin)</code></pre></div>
+      </div>`;
+
+      const md = await htmlToMarkdown(html);
+
+      expect(md.trim()).toBe(
+        [
+          'tsx',
+          '',
+          '```tsx',
+          'const getOrigin = createIsomorphicFn()',
+          '  .server(() => new URL(getRequest().url).origin)',
+          '  .client(() => window.location.origin)',
+          '```',
+        ].join('\n'),
+      );
+    });
+
     it('prefers language metadata on pre over ancestor divs', async () => {
       const html = `
         <div data-lang="bash">

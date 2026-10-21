@@ -214,7 +214,9 @@ function normalizeGitHubCodeBlockLanguage(value: string): string | null {
 function getCodeBlockLanguageFromProperties(node: any): string | null {
   const dataLang =
     normalizeCodeBlockLanguage(node.properties?.dataLang) ??
-    normalizeCodeBlockLanguage(node.properties?.['data-lang']);
+    normalizeCodeBlockLanguage(node.properties?.['data-lang']) ??
+    normalizeCodeBlockLanguage(node.properties?.dataLanguage) ??
+    normalizeCodeBlockLanguage(node.properties?.['data-language']);
   if (dataLang) return dataLang;
 
   const classNames = node.properties?.className;
